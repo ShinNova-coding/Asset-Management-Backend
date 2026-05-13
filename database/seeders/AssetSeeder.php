@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Asset;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class AssetsSeeder extends Seeder
@@ -13,6 +11,5 @@ class AssetsSeeder extends Seeder
      */
     public function run(): void
     {
-        Asset::factory(3)->create();
     }
 }
