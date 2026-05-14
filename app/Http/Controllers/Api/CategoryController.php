@@ -15,6 +15,12 @@ class CategoryController extends Controller
     {
         $categories = Category::all();
 
+        if($categories->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No categories found'
+            ], 404);
+        }
         return response()->json([
             'success' => true,
             'data' => $categories,
@@ -27,6 +33,7 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
+        try{
          $request->validate([
             'name' => 'required|string|unique:categories,name'
         ]);
@@ -38,6 +45,12 @@ class CategoryController extends Controller
             'data' => $category,
             'message' => 'Category created successfully'
         ], 201);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 
     /**

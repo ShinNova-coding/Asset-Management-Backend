@@ -18,6 +18,12 @@ class AssetController extends Controller
 
             $assets = Asset::with('category')->latest()->get();
 
+            if ($assets->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No assets found'
+                ], 404);
+            }
             return response()->json([
                 'success' => true,
                 'data' => $assets
@@ -35,27 +41,27 @@ class AssetController extends Controller
      */
     public function store(Request $request)
     {
-         try {
+        try {
             $request->validate([
-                'asset_id'        => 'required|string|unique:assets,asset_id',
-                'name'            => 'required|string|max:255',
-                'serial_number'   => 'required|string|unique:assets,serial_number',
-                'purchased_date'  => 'required|date',
+                'asset_id' => 'required|string|unique:assets,asset_id',
+                'name' => 'required|string|max:255',
+                'serial_number' => 'required|string|unique:assets,serial_number',
+                'purchased_date' => 'required|date',
                 'warranty_expiry' => 'required|date|after_or_equal:purchased_date',
-                'category_id'     => 'required|exists:categories,id',
-                'status'          => 'required|string',
-                'condition'       => 'required|string',
+                'category_id' => 'required|exists:categories,id',
+                'status' => 'required|string',
+                'condition' => 'required|string',
             ]);
 
             $asset = Asset::create([
-                'asset_id'        => $request->asset_id,
-                'name'            => $request->name,
-                'serial_number'   => $request->serial_number,
-                'purchased_date'  => $request->purchased_date,
+                'asset_id' => $request->asset_id,
+                'name' => $request->name,
+                'serial_number' => $request->serial_number,
+                'purchased_date' => $request->purchased_date,
                 'warranty_expiry' => $request->warranty_expiry,
-                'category_id'     => $request->category_id,
-                'status'          => $request->status,
-                'condition'       => $request->condition,
+                'category_id' => $request->category_id,
+                'status' => $request->status,
+                'condition' => $request->condition,
             ]);
 
             return response()->json([
@@ -79,7 +85,7 @@ class AssetController extends Controller
     public function show(string $id)
     {
         try {
-            
+
             $asset = Asset::with('category')->firstWhere('asset_id', $id);
 
             if (!$asset) {
@@ -118,13 +124,13 @@ class AssetController extends Controller
             }
 
             $request->validate([
-                'name'            => 'required|string|max:255',
-                'serial_number'   => "required|string|unique:assets,serial_number,{$asset->id}",
-                'purchased_date'  => 'required|date',
+                'name' => 'required|string|max:255',
+                'serial_number' => 'required|unique:assets,serial_number,' . $id . ',asset_id',
+                'purchased_date' => 'required|date',
                 'warranty_expiry' => 'required|date|after_or_equal:purchased_date',
-                'category_id'     => 'required|exists:categories,id',
-                'status'          => 'required|string',
-                'condition'       => 'required|string',
+                'category_id' => 'required|exists:categories,id',
+                'status' => 'required|string',
+                'condition' => 'required|string',
             ]);
 
             $asset->update($request->all());
