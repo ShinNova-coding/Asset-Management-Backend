@@ -15,7 +15,7 @@ class CategorySeeder extends Seeder
         $categories = ['Laptop', 'Monitor', 'Mobile Phone', 'Tablet', 'Office Chair'];
 
         foreach ($categories as $cat) {
-            \App\Models\Category::create(['name' => $cat]);
+            Category::create(['name' => $cat]);
         }
     }
 }
