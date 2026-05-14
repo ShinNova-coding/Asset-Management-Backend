@@ -167,6 +167,7 @@ class AssetController extends Controller
 
             $asset->delete();
 
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Asset Deleted Successfully'
