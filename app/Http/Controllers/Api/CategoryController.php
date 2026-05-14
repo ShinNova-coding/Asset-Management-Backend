@@ -58,7 +58,7 @@ class CategoryController extends Controller
      */
     public function show(string $id)
     {
-        $category = Category::find($id);
+        $category = Category::firstWhere('id', $id);
 
         if (!$category) {
             return response()->json([
@@ -80,7 +80,7 @@ class CategoryController extends Controller
     public function update(Request $request, string $id)
     {
         try {
-            $category = Category::find($id);
+            $category = Category::firstWhere('id', $id);
 
             if (!$category) {
                 return response()->json([
@@ -115,7 +115,7 @@ class CategoryController extends Controller
     public function destroy(string $id)
     {
         try {
-            $category = Category::find($id);
+            $category = Category::firstWhere('id', $id);
 
             if (!$category) {
                 return response()->json([
