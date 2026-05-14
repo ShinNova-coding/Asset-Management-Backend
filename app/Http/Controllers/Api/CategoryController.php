@@ -27,11 +27,11 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-         $request->validate([
+         $validated = $request->validate([
             'name' => 'required|string|unique:categories,name'
         ]);
 
-        $category = Category::create($request->all());
+        $category = Category::create($validated);
 
         return response()->json([
             'success' => true,
