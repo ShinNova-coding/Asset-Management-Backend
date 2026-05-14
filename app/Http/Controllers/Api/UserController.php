@@ -16,7 +16,7 @@ class UserController extends Controller
     public function index()
     {
         $user = User::all();
-        if (! $user) {
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'no user found',
@@ -26,6 +26,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'data' => $user,
+            'message' => 'User found successfully!!',
         ], 200);
     }
 
@@ -57,6 +58,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $request->all(),
+                'message' => 'User created successfully!!',
             ], 200);
         } catch (Exception $e) {
             return response()->json([
@@ -83,6 +85,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'data' => $showuser,
+            'message' => 'User found successfully!!',
         ], 200);
 
     }
@@ -112,6 +115,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $user->refresh(),
+                'message' => 'User updated successfully!!',
             ], 200);
         } catch (Exception $e) {
             return response()->json([
