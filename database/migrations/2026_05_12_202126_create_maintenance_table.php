@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('asset_id');
             $table->foreign('asset_id')->references('asset_id')->on('assets')->cascadeOnDelete();
             $table->string('vendor');
-            
+            $table->string('vendor_phno');
+            $table->string('vendor_address');
             $table->integer('cost');
             $table->string('status')->default('completed');
             $table->date('maintenance_date');

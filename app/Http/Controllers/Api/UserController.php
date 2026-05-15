@@ -15,8 +15,8 @@ class UserController extends Controller
      */
     public function index()
     {
-        $user = User::all();
-        if (!$user) {
+        $user = User::with('roles')->get();
+        if ($user->isEmpty()) {
             return response()->json([
                 'success' => false,
                 'message' => 'no user found',
@@ -39,25 +39,27 @@ class UserController extends Controller
             $request->validate([
                 'employee_id' => 'required|string|unique:users,employee_id',
                 'name' => 'required|string|max:255',
-                'role_id' => 'required|exists:roles,id',
                 'email' => 'required|email|unique:users,email',
                 'joined_date' => 'required|date',
                 'password' => 'required|min:8|confirmed',
+                'role'=>'required'
             ]);
 
-            User::create([
+            $user=User::create([
                 'employee_id' => $request->employee_id,
                 'name' => $request->name,
-                'role_id' => $request->role_id,
                 'email' => $request->email,
                 'joined_date' => $request->joined_date,
                 'password' => Hash::make($request->password),
                 'status' => 'active',
             ]);
 
+            $user->assignRole($request->role);
+
+            $user->load('roles');
             return response()->json([
                 'success' => true,
-                'data' => $request->all(),
+                'data' => $user,
                 'message' => 'User created successfully!!',
             ], 200);
         } catch (Exception $e) {
@@ -81,6 +83,7 @@ class UserController extends Controller
                 'message' => 'No user found for this specific ID',
             ]);
         }
+        $showuser->load('roles');
 
         return response()->json([
             'success' => true,
@@ -99,19 +102,23 @@ class UserController extends Controller
             $user = User::firstWhere('employee_id', $id);
             $request->validate([
                 'name' => 'required|string|max:255',
-                'role_id' => 'required|exists:roles,id',
+                'role' => 'required',
                 'email' => 'required|email|unique:users,email,'.$user->employee_id.',employee_id',
                 'left_date' => 'nullable|date|after_or_equal:joined_date',
             ]);
 
-            $data = $request->except('password');
+            $data = $request->except('password','role');
 
             if ($request->filled('password')) {
                 $data['password'] = Hash::make($request->password);
             }
-
             $user->update($data);
 
+            if($request->filled('role')){
+                $user->syncRoles($request->role);
+            }
+
+            $user->load('roles');
             return response()->json([
                 'success' => true,
                 'data' => $user->refresh(),
@@ -140,6 +147,12 @@ class UserController extends Controller
                 ], 404);
             }
 
+            if($user->hasRole('admin')){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Admin user cannot be deleted!!',
+                ], 403);
+            }
             $user->delete();
             return response()->json([
                 'success' => true,
