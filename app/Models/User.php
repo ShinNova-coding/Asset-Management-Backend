@@ -33,6 +33,8 @@ class User extends Authenticatable
     public $incrementing = false;
     protected $keyType = 'string';
 
+    protected $guard_name = 'sanctum';
+
     /**
      * Get the attributes that should be cast.
      *

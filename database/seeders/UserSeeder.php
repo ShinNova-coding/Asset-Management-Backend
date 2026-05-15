@@ -14,7 +14,13 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+         $this->call([
+            PermissionSeeder::class,
+            RoleSeeder::class
+        ]);
         $superAdminRole = Role::create(['name' => 'super-admin','guard_name' => 'sanctum']);
+        $permissions = \Spatie\Permission\Models\Permission::all();
+        $superAdminRole->givePermissionTo($permissions);
        $user= User::create([
             'employee_id' => 'EMP-001',
             'name' => 'System Admin',

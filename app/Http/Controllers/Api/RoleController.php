@@ -14,11 +14,17 @@ class RoleController extends Controller
      */
     public function index()
     {
-        $role= Role::all();
+        $roles= Role::with('permissions')->get();
+        if(!$roles){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No roles found'
+            ], 404);
+        }
         return response()->json([
             'status' => 'success',
-            'data' => $role,
-            'message' => 'Role retrieved successfully'
+            'data' => $roles,
+            'message' => 'Roles retrieved successfully'
         ]);
     }
 
@@ -53,6 +59,7 @@ class RoleController extends Controller
     public function show(string $id)
     {
         try{
+         /** @var \Spatie\Permission\Models\Role|null $role */
         $role = Role::find($id);
         if (! $role) {
             return response()->json([
@@ -62,7 +69,8 @@ class RoleController extends Controller
         }
         return response()->json([
             'status' => 'success',
-            'data' => $role
+            'data' => $role->load('permissions'),
+            'message' => 'Role retrieved successfully'
         ]); }
         catch(Exception $e){
             return response()->json([
