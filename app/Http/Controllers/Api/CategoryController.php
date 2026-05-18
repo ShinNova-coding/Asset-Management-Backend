@@ -38,7 +38,7 @@ class CategoryController extends Controller
             'name' => 'required|string|unique:categories,name'
         ]);
 
-        $category = Category::create($request->all());
+        $category = Category::create($request);
 
         return response()->json([
             'success' => true,
@@ -58,7 +58,7 @@ class CategoryController extends Controller
      */
     public function show(string $id)
     {
-        $category = Category::find($id);
+        $category = Category::firstWhere('id', $id);
 
         if (!$category) {
             return response()->json([
@@ -80,7 +80,7 @@ class CategoryController extends Controller
     public function update(Request $request, string $id)
     {
         try {
-            $category = Category::find($id);
+            $category = Category::firstWhere('id', $id);
 
             if (!$category) {
                 return response()->json([
@@ -115,7 +115,7 @@ class CategoryController extends Controller
     public function destroy(string $id)
     {
         try {
-            $category = Category::find($id);
+            $category = Category::firstWhere('id', $id);
 
             if (!$category) {
                 return response()->json([
