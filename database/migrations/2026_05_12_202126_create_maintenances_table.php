@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('maintenance', function (Blueprint $table) {
+        Schema::create('maintenances', function (Blueprint $table) {
             $table->id();
             $table->string('asset_id');
             $table->foreign('asset_id')->references('asset_id')->on('assets')->cascadeOnDelete();
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->integer('cost');
             $table->string('status')->default('completed');
             $table->date('maintenance_date');
-            $table->date('completed_date');
+            $table->date('completed_date')->nullable();
             $table->timestamps();
         });
     }
@@ -31,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('maintenance');
+        Schema::dropIfExists('maintenances');
     }
 };

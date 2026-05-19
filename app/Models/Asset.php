@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Asset extends Model
 {
+    use LogsActivity;
     protected $guarded=[];
 
     protected $primaryKey='asset_id';//primary key change
@@ -24,5 +27,13 @@ class Asset extends Model
 
     public function maintenance(){
         return $this->hasMany(Maintenance::class);
+    }
+
+    public function getActivitylogOptions():LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'employee_id','status'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

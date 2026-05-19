@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('assignments', function (Blueprint $table) {
             $table->id();
-            $table->string('employee_id'); // must exist
+            $table->string('employee_id'); 
             $table->foreign('employee_id')->references('employee_id')->on('users')->cascadeOnDelete();
             $table->string('asset_id');
             $table->foreign('asset_id')->references('asset_id')->on('assets')->cascadeOnDelete();
             $table->string('note')->nullable();
             $table->string('status')->default('available');
             $table->date('assign_date');//onboarding date
-            $table->date('return_date');//offboarding date
+            $table->date('return_date')->nullable();//offboarding date
             $table->timestamps();
         });
     }

@@ -11,13 +11,7 @@ class Assignment extends Model
 
     protected $table = 'assignments';
 
-    protected $fillable = [
-        'asset_id',
-        'employee_id',
-        'assigned_date',
-        'returned_date',
-        'status',
-    ];
+    protected $guarded = [];
 
     public function asset()
     {

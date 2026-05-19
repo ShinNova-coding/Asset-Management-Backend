@@ -38,7 +38,7 @@ class CategoryController extends Controller
             'name' => 'required|string|unique:categories,name'
         ]);
 
-        $category = Category::create($request);
+        $category = Category::create($request->only(['name']));
 
         return response()->json([
             'success' => true,
@@ -93,7 +93,7 @@ class CategoryController extends Controller
                 'name' => 'required|string|max:255|unique:categories,name,' . $id
             ]);
 
-            $category->update($request->all());
+            $category->update($request->only(['name']));
 
             return response()->json([
                 'success' => true,

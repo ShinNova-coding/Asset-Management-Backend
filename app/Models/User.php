@@ -6,11 +6,14 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use Notifiable,HasApiTokens,HasRoles;
+    use Notifiable,HasApiTokens,HasRoles,InteractsWithMedia;
 
     /**
      * The attributes that are mass assignable.
@@ -46,6 +49,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function registerMediaConversions(?Media $media=null)
+    {
+        $this->addMediaConversion('preview')
+             ->fit(Fit::Contain,300,300)
+             ->nonQueued();
     }
 
 }

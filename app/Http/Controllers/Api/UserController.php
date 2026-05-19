@@ -41,6 +41,8 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'joined_date' => 'required|date',
+                'position' => 'nullable|string|max:255',
+                'phone_number' => 'nullable|string|max:20',
                 'password' => 'required|min:8|confirmed',
                 'role'=>'required'
             ]);
@@ -50,9 +52,16 @@ class UserController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'joined_date' => $request->joined_date,
+                'position' => $request->position,
+                'phone_number' => $request->phone_number,
                 'password' => Hash::make($request->password),
                 'status' => 'active',
             ]);
+
+            if($request->hasFile('image')){
+                $user->addMediaFromRequest('image')
+                    ->toMediaCollection('images');
+            }
 
             $user->assignRole($request->role);
 
@@ -102,9 +111,12 @@ class UserController extends Controller
             $user = User::firstWhere('employee_id', $id);
             $request->validate([
                 'name' => 'required|string|max:255',
-                'role' => 'required',
                 'email' => 'required|email|unique:users,email,'.$user->employee_id.',employee_id',
-                'left_date' => 'nullable|date|after_or_equal:joined_date',
+                'joined_date' => 'required|date',
+                'position' => 'nullable|string|max:255',
+                'phone_number' => 'nullable|string|max:20',
+                'password' => 'required|min:8|confirmed',
+                'role'=>'required'
             ]);
 
             $data = $request->except('password','role');
