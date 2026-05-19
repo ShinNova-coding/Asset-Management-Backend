@@ -5,10 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Asset extends Model
+class Asset extends Model implements HasMedia
 {
-    use LogsActivity;
+    use LogsActivity,InteractsWithMedia;
     protected $guarded=[];
 
     protected $primaryKey='asset_id';//primary key change
@@ -35,5 +39,19 @@ class Asset extends Model
             ->logOnly(['name', 'employee_id','status'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    public function registerMediaConversions(?Media $media=null):void
+    {
+        $this->addMediaConversion('preview')//preview loh naming pay call tone poh
+             ->fit(Fit::Contain,300,300)//image size
+             ->nonQueued();//no wait 
+    }
+
+    public function registerMediaCollections():void
+    {
+        $this->addMediaCollection('images')//call tone poh naming
+             ->acceptsMimeTypes(['image/jpeg', 'image/jpg', 'image/png'])//rule tat mark
+             ->singleFile();//delete old photos
     }
 }

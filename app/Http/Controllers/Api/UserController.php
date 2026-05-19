@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Assignment;
 use App\Models\User;
+use Auth;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -44,28 +47,39 @@ class UserController extends Controller
                 'position' => 'nullable|string|max:255',
                 'phone_number' => 'nullable|string|max:20',
                 'password' => 'required|min:8|confirmed',
-                'role'=>'required'
+                'role' => 'required',
+                'image' => 'required|string'
             ]);
 
-            $user=User::create([
-                'employee_id' => $request->employee_id,
-                'name' => $request->name,
-                'email' => $request->email,
-                'joined_date' => $request->joined_date,
-                'position' => $request->position,
-                'phone_number' => $request->phone_number,
-                'password' => Hash::make($request->password),
-                'status' => 'active',
-            ]);
+            $user = DB::transaction(function () use ($request) {
 
-            if($request->hasFile('image')){
-                $user->addMediaFromRequest('image')
-                    ->toMediaCollection('images');
-            }
+                $user = User::create([
+                    'employee_id' => $request->employee_id,
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'joined_date' => $request->joined_date,
+                    'position' => $request->position,
+                    'phone_number' => $request->phone_number,
+                    'password' => Hash::make($request->password),
+                    'status' => 'active',
+                ]);
 
-            $user->assignRole($request->role);
+                $user->assignRole($request->role);
 
-            $user->load('roles');
+                $user->load('roles');
+
+                if ($request->has('image') && $request->filled('image')) {
+                    $user->addMediaFromBase64($request->image)
+                        ->toMediaCollection('images');
+                }
+                return $user;
+            });
+
+            $image_url = $user->getFirstMediaUrl('images') ?: null;
+            $preview_url = $user->getFirstMediaUrl('images', 'preview') ?: null;
+
+            $user->image_url = $image_url;
+            $user->preview_url = $preview_url;
             return response()->json([
                 'success' => true,
                 'data' => $user,
@@ -85,7 +99,7 @@ class UserController extends Controller
     public function show(string $id)
     {
         $showuser = User::firstWhere('employee_id', $id);
-        if (! $showuser) {
+        if (!$showuser) {
 
             return response()->json([
                 'success' => false,
@@ -93,6 +107,12 @@ class UserController extends Controller
             ]);
         }
         $showuser->load('roles');
+
+        $image_url = $showuser->getFirstMediaUrl('images') ?: null;
+        $preview_url = $showuser->getFirstMediaUrl('images', 'preview') ?: null;
+
+        $showuser->image_url = $image_url;
+        $showuser->preview_url = $preview_url;
 
         return response()->json([
             'success' => true,
@@ -111,22 +131,28 @@ class UserController extends Controller
             $user = User::firstWhere('employee_id', $id);
             $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email,'.$user->employee_id.',employee_id',
+                'email' => 'required|email|unique:users,email,' . $user->employee_id . ',employee_id',
                 'joined_date' => 'required|date',
                 'position' => 'nullable|string|max:255',
                 'phone_number' => 'nullable|string|max:20',
-                'password' => 'required|min:8|confirmed',
-                'role'=>'required'
+                'role' => 'required',
+                'image' => 'required|string'
             ]);
 
-            $data = $request->except('password','role');
+            $data = $request->except('password', 'role', 'image');
 
             if ($request->filled('password')) {
                 $data['password'] = Hash::make($request->password);
             }
+
+            if ($request->has('image') && $request->filled('image')) {
+                $user->clearMediaCollection('images');
+                $user->addMediaFromBase64($request->image)
+                    ->toMediaCollection('images');
+            }
             $user->update($data);
 
-            if($request->filled('role')){
+            if ($request->filled('role')) {
                 $user->syncRoles($request->role);
             }
 
@@ -151,15 +177,15 @@ class UserController extends Controller
     {
         try {
             $user = User::firstWhere('employee_id', $id);
-            
-            if (! $user) {
+
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'User not found!!',
                 ], 404);
             }
 
-            if($user->hasRole('admin')){
+            if ($user->hasRole('admin')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Admin user cannot be deleted!!',
@@ -176,6 +202,15 @@ class UserController extends Controller
                 'message' => $e->getMessage(),
             ]);
         }
-
     }
+     public function getNotification(){
+    
+    $notification=Auth::user()->unreadNotifications();
+    return response()->json([
+        'success'=>true,
+        'message'=>'notification send successfully',
+        'data'=>$notification
+    ]);
+    }
+
 }

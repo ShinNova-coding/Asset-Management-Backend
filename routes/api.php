@@ -27,6 +27,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/maintenance/{id}/complete', [MaintenanceController::class, 'complete'])->name('maintenance.complete');
     Route::post('/maintenance/{id}/cancel', [MaintenanceController::class, 'cancel'])->name('maintenance.cancel');
 
+    Route::post('/user/notification',[UserController::class,'getNotification'])->name('user.getNotification');
+    
     Route::middleware('permission:manage-users')->group(function () {
         Route::resource('user', UserController::class);
         Route::get('/dashboard', [DashboardController::class, 'dashboardview'])->name('dashboard.view');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
+use DB;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -24,6 +25,8 @@ class AssetController extends Controller
                     'message' => 'No assets found'
                 ], 404);
             }
+
+            
             return response()->json([
                 'success' => true,
                 'data' => $assets
@@ -51,8 +54,10 @@ class AssetController extends Controller
                 'category_id' => 'required|exists:categories,id',
                 'status' => 'required|string',
                 'condition' => 'required|string',
+                'image' => 'required|string'
             ]);
 
+            $asset=DB::transaction(function () use ($request) {
             $asset = Asset::create([
                 'asset_id' => $request->asset_id,
                 'name' => $request->name,
@@ -64,6 +69,17 @@ class AssetController extends Controller
                 'condition' => $request->condition,
             ]);
 
+            if ($request->has('image') && $request->filled('image')) {
+                $asset->addMediaFromBase64($request->image)
+                    ->toMediaCollection('images');
+            }
+            return $asset;
+            });
+             $image_url = $asset->getFirstMediaUrl('images') ?: null;
+            $preview_url = $asset->getFirstMediaUrl('images', 'preview') ?: null;
+
+            $asset->image_url = $image_url;
+            $asset->preview_url = $preview_url;
             return response()->json([
                 'success' => true,
                 'data' => $asset,
@@ -94,6 +110,12 @@ class AssetController extends Controller
                     'message' => 'Asset not found'
                 ], 404);
             }
+
+            $image_url = $asset->getFirstMediaUrl('images') ?: null;
+            $preview_url = $asset->getFirstMediaUrl('images', 'preview') ?: null;
+
+            $asset->image_url = $image_url;
+            $asset->preview_url = $preview_url;
 
             return response()->json([
                 'success' => true,
@@ -131,9 +153,22 @@ class AssetController extends Controller
                 'category_id' => 'required|exists:categories,id',
                 'status' => 'required|string',
                 'condition' => 'required|string',
+                'image' => 'required|string'
             ]);
 
-            $asset->update($request->all());
+            if ($request->has('image') && $request->filled('image')) {
+                $asset->clearMediaCollection('images');
+                $asset->addMediaFromBase64($request->image)
+                    ->toMediaCollection('images');
+            }
+
+            $asset->update($request->except('image'));
+
+            $image_url = $asset->getFirstMediaUrl('images') ?: null;
+            $preview_url = $asset->getFirstMediaUrl('images', 'preview') ?: null;
+
+            $asset->image_url = $image_url;
+            $asset->preview_url = $preview_url;
 
             return response()->json([
                 'success' => true,
@@ -167,7 +202,7 @@ class AssetController extends Controller
 
             $asset->delete();
 
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Asset Deleted Successfully'
