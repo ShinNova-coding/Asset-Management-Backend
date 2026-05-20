@@ -67,6 +67,16 @@ class User extends Authenticatable implements HasMedia
              ->singleFile();//delete old photos
     }
 
-   
+   public function assetRequest(){
+return $this->hasMany(AssetRequest::class);
+   }
 
+   public function assignment(){
+    return $this->hasMany(Assignment::class);
+   }
+   
+   public function getKeyName()
+{
+    return 'employee_id';
+}
 }

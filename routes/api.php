@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AssetRequestController;
 use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\LoginController;
@@ -19,6 +20,9 @@ Route::post('/reset-password', [PasswordResetController::class, 'submitResetPass
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout',[LoginController::class,'logout'])->name('logout');
+
+    Route::post('/assetrequest',[AssetRequestController::class,'store']);
+    Route::post('/admin/requests/{id}/approve',[AssetRequestController::class,'approve']);
     
     Route::resource('assignment', AssignmentController::class);
     Route::post('/assignment/{id}/release', [AssignmentController::class, 'release'])->name('assignment.release');
