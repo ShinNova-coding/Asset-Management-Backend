@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+use App\Http\Controllers\PermissionController;
 use App\Models\Category;
 use Exception;
 use App\Http\Controllers\Controller;
@@ -13,6 +14,7 @@ class CategoryController extends Controller
      */
     public function index()
     {
+        PermissionController::checkPermission('view-categories');
         $categories = Category::all();
 
         if($categories->isEmpty()) {
@@ -33,6 +35,7 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
+        PermissionController::checkPermission('create-categories');
         try{
          $request->validate([
             'name' => 'required|string|unique:categories,name'
@@ -58,6 +61,8 @@ class CategoryController extends Controller
      */
     public function show(string $id)
     {
+        PermissionController::checkPermission('view-categories');
+         $category = Category::firstWhere('id', $id);
         $category = Category::firstWhere('id', $id);
 
         if (!$category) {
@@ -79,6 +84,7 @@ class CategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        PermissionController::checkPermission('update-categories');
         try {
             $category = Category::firstWhere('id', $id);
 
@@ -114,6 +120,7 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
+        PermissionController::checkPermission('delete-categories'); 
         try {
             $category = Category::firstWhere('id', $id);
 

@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PermissionController;
 use App\Models\Asset;
 use App\Models\AssetRequest;
 use App\Models\Assignment;
 use App\Notifications\AssetApprovedNotification;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Permission;
 
 class AssetRequestController extends Controller
 {
     public function store(Request $request){
 
-
+        PermissionController::checkPermission('create-asset-requests');
         $request->validate([
             'asset_id'=>'required'
         ]);
@@ -48,6 +50,7 @@ class AssetRequestController extends Controller
 
     public function approve(Request $request, $id)
     {
+        PermissionController::checkPermission('approve-asset-requests');
         $assetRequest = AssetRequest::findOrFail($id);
 
         if ($assetRequest->status != 'pending') {

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PermissionController;
 use App\Models\Asset;
 use DB;
 use Exception;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Permission;
 
 class AssetController extends Controller
 {
@@ -15,6 +17,7 @@ class AssetController extends Controller
      */
     public function index()
     {
+        PermissionController::checkPermission('view-assets');
         try {
 
             $assets = Asset::with('category')->latest()->get();
@@ -44,6 +47,8 @@ class AssetController extends Controller
      */
     public function store(Request $request)
     {
+        PermissionController::checkPermission('create-assets');     
+
         try {
             $request->validate([
                 'asset_id' => 'required|string|unique:assets,asset_id',
@@ -100,6 +105,7 @@ class AssetController extends Controller
      */
     public function show(string $id)
     {
+        PermissionController::checkPermission('view-assets');
         try {
 
             $asset = Asset::with('category')->firstWhere('asset_id', $id);
@@ -135,6 +141,7 @@ class AssetController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        PermissionController::checkPermission('update-assets');
         try {
             $asset = Asset::firstWhere('asset_id', $id);
 
@@ -190,6 +197,7 @@ class AssetController extends Controller
      */
     public function destroy(string $id)
     {
+        PermissionController::checkPermission('delete-assets');     
         try {
             $asset = Asset::firstWhere('asset_id', $id);
 

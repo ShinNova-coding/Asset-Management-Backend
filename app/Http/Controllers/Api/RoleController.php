@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PermissionController;
 use Exception;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 
@@ -14,6 +16,7 @@ class RoleController extends Controller
      */
     public function index()
     {
+        PermissionController::checkPermission('view-roles');
         $roles= Role::with('permissions')->get();
         if(!$roles){
             return response()->json([
@@ -33,6 +36,7 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+        PermissionController::checkPermission('create-roles');  
         try{
         $request->validate([
             'name' => 'required|unique:roles,name',
@@ -58,6 +62,7 @@ class RoleController extends Controller
      */
     public function show(string $id)
     {
+        PermissionController::checkPermission('view-roles');
         try{
          /** @var \Spatie\Permission\Models\Role|null $role */
         $role = Role::find($id);
@@ -90,6 +95,7 @@ class RoleController extends Controller
 
     public function update(Request $request, string $id)
     {
+        PermissionController::checkPermission('update-roles');
         try {
             /** @var \Spatie\Permission\Models\Role|null $role */
             $role = Role::find($id);
@@ -126,6 +132,7 @@ class RoleController extends Controller
 
     public function destroy(string $id)
     {
+        PermissionController::checkPermission('delete-roles');
         try {
             /** @var \Spatie\Permission\Models\Role|null $role */
             $role = Role::find($id);

@@ -145,7 +145,7 @@ class MaintenanceController extends Controller
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
             $maintenance->update([
-                'status' => 'cancelled',
+                'status' => 'canceled',
                 'completed_date' => now()
             ]);
             Asset::where('asset_id', $maintenance->asset_id)->update(['status' => 'available']);

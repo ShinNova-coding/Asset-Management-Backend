@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PermissionController;
 use App\Models\Asset;
 use App\Models\Assignment;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class AssignmentController extends Controller
 {
     public function index()
     {
+        PermissionController::checkPermission('view-assignments');
         $assignments = Assignment::with(['asset', 'user'])->latest()->get();
         if ($assignments->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'No assignments found'], 404);
@@ -23,6 +25,7 @@ class AssignmentController extends Controller
 
     public function store(Request $request)
     {
+        PermissionController::checkPermission('create-assignments');
         try {
             $request->validate([
                 'asset_id' => 'required|exists:assets,asset_id',
@@ -52,6 +55,7 @@ class AssignmentController extends Controller
 
     public function show($id)
     {
+        PermissionController::checkPermission('view-assignments');
         try {
             $assignment = Assignment::with(['asset', 'user'])->find($id);
             if (!$assignment) {
@@ -65,6 +69,7 @@ class AssignmentController extends Controller
 
     public function update(Request $request, $id)
     {
+        PermissionController::checkPermission('update-assignments');
         try {
             $assignment = Assignment::find($id);
             if (!$assignment) {
@@ -95,6 +100,7 @@ class AssignmentController extends Controller
 
     public function destroy($id)
     {
+        PermissionController::checkPermission('delete-assignments');
         try {
             $assignment = Assignment::findOrFail($id);
 
@@ -112,10 +118,11 @@ class AssignmentController extends Controller
         }
     }
 
-    public function release($id)
+    public static function release($id)
     {
+        PermissionController::checkPermission('update-assignments');
         try {
-            $assignment = Assignment::findOrFail($id);
+            $assignment = Assignment::findOrFail($id);      
 
             if ($assignment->status !== 'active') {
                 return response()->json([
@@ -125,7 +132,7 @@ class AssignmentController extends Controller
             }
 
             $assignment->update([
-                'status' => 'released',
+                'status' => 'returned',
                 'return_date' => now()
             ]);
 
@@ -133,7 +140,7 @@ class AssignmentController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Asset released successfully'
+                'message' => 'Asset returned successfully'
             ], 200);
         } catch (Exception $e) {
             return response()->json([

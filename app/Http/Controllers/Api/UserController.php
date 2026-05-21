@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\AssetAssignmentController;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PermissionController;
 use App\Models\Assignment;
 use App\Models\User;
 use Auth;
@@ -16,8 +18,10 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
+
     public function index()
     {
+        PermissionController::checkPermission('view-users');
         $user = User::with('roles')->get();
         if ($user->isEmpty()) {
             return response()->json([
@@ -38,6 +42,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        PermissionController::checkPermission('create-users');
         try {
             $request->validate([
                 'employee_id' => 'required|string|unique:users,employee_id',
@@ -98,6 +103,7 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
+        PermissionController::checkPermission('view-users');
         $showuser = User::firstWhere('employee_id', $id);
         if (!$showuser) {
 
@@ -127,6 +133,7 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        PermissionController::checkPermission('update-users');
         try {
             $user = User::firstWhere('employee_id', $id);
             $request->validate([
@@ -136,8 +143,17 @@ class UserController extends Controller
                 'position' => 'nullable|string|max:255',
                 'phone_number' => 'nullable|string|max:20',
                 'role' => 'required',
+                'status' => 'required|in:active,inactive,suspended',
                 'image' => 'required|string'
             ]);
+
+            if($request->status ==='suspended'){
+                AssetAssignmentController::suspend($user->employee_id);
+            }
+
+            if($request->status ==='inactive'){
+                AssetAssignmentController::inactive($user->employee_id);
+            }
 
             $data = $request->except('password', 'role', 'image');
 
@@ -175,6 +191,7 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
+        PermissionController::checkPermission('delete-users');
         try {
             $user = User::firstWhere('employee_id', $id);
 
@@ -204,7 +221,7 @@ class UserController extends Controller
         }
     }
      public function getNotification(){
-    
+        PermissionController::checkPermission('get-notifications');
     $notification=Auth::user()->unreadNotifications();
     return response()->json([
         'success'=>true,

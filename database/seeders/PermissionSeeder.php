@@ -43,6 +43,22 @@ class PermissionSeeder extends Seeder
             'create-permissions',
             'update-permissions',
             'delete-permissions',
+
+            'view-dashboard',
+            
+            'view-assignments',
+            'create-assignments',
+            'update-assignments',
+            'delete-assignments',
+
+            'view-maintenance',
+            'create-maintenance',  
+            'update-maintenance',
+            'delete-maintenance',
+
+            'get-notifications',
+            'create-asset-requests',
+            'approve-asset-requests'
         ];
 
         foreach ($permissions as $permission) {
