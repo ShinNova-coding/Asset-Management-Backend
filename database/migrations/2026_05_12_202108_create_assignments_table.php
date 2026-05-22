@@ -19,8 +19,8 @@ return new class extends Migration
             $table->foreign('asset_id')->references('asset_id')->on('assets')->cascadeOnDelete();
             $table->string('note')->nullable();
             $table->string('status')->default('available');
-            $table->date('assign_date');//onboarding date
-            $table->date('return_date')->nullable();//offboarding date
+            $table->date('assign_date');
+            $table->date('return_date')->nullable();
             $table->timestamps();
         });
     }

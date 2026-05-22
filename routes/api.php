@@ -25,10 +25,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/change-password', [\App\Http\Controllers\ChangePasswordController::class, 'changePassword'])->name('password.change');
 
-    Route::post('/assetrequest', [AssetRequestController::class, 'store']);
+    Route::post('/assetrequest', [AssetRequestController::class, 'assignRequest']);
     Route::post('/admin/requests/{id}/approve', [AssetRequestController::class, 'approve']);
+    Route::post('/admin/requests/{id}/reject', [AssetRequestController::class, 'reject']);
 
     Route::resource('assignment', AssignmentController::class);
+    Route::get('/assignment/{id}/asset',[AssignmentController::class,'getEmployeeAsset'])->name('assignment.getEmployeeAsset');
     Route::post('/assignment/{id}/release', [AssignmentController::class, 'release'])->name('assignment.release');
 
     Route::resource('maintenance', MaintenanceController::class);
@@ -38,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboardview'])->name('dashboard.view');
 
     Route::post('/admin/users/{id}/suspend', [AssetAssignmentController::class, 'suspend'])->name('user.suspend');
-    Route::post('/admin/users/{id}/inactive', [AssetAssignmentController::class, 'inactive'])->name('user.inactive');
+    Route::post('/admin/users/{id}/resign', [AssetAssignmentController::class, 'resign'])->name('user.resign');
     
     Route::resource('user', UserController::class);
     Route::post('/user/notification', [UserController::class, 'getNotification'])->name('user.getNotification');

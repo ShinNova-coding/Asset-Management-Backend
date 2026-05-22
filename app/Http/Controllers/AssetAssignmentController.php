@@ -18,14 +18,16 @@ class AssetAssignmentController extends Controller
     $user->update(['status'=>'suspended']);
 
     $assignments=Assignment::where('employee_id',$id)
-                            ->where('status','assigned')
+                            ->where('status','active')
                             ->get();
 
     $assets=Asset::whereIn('id', $assignments->pluck('asset_id'))->get();
 
     foreach($assignments as $assignment){
         $user->notify(new AssetAssignmentNotification($assignment));
-        $assignment->update(['status'=>'returned']);}
+        }
+
+        $assignments->pluck('id')->update(['status'=>'returned']);
 
         foreach($assets as $asset){
             $asset->update(['status'=>'available']);
@@ -37,23 +39,26 @@ class AssetAssignmentController extends Controller
         ], 200);
     }
 
-    public static function inactive(string $id){
+    public static function resign(string $id){
 
         PermissionController::checkPermission('update-users');
         $user=User::find($id);
 
-        $user->update(['status'=>'inactive']);
+        $user->update(['status'=>'resign']);
 
         $assignments=Assignment::where('employee_id',$id)
-                                ->where('status','assigned')
+                                ->where('status','active')
                                 ->get();
 
         $assets=Asset::whereIn('id', $assignments->pluck('asset_id'))->get();
 
         foreach($assignments as $assignment){
         $user->notify(new AssetAssignmentNotification($assignment));
-        $assignment->update(['status'=>'returned']);    
         }
+
+        $assignments->pluck('id')->update(['status'=>'returned']);
+
+    
         foreach($assets as $asset){
             $asset->update(['status'=>'available']);
         }        return response()->json([

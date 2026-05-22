@@ -8,12 +8,14 @@ use App\Models\Asset;
 use App\Models\AssetRequest;
 use App\Models\Assignment;
 use App\Notifications\AssetApprovedNotification;
+use App\Notifications\AssetRejectNotification;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 
 class AssetRequestController extends Controller
 {
-    public function store(Request $request){
+    //user ka assign button click yin
+    public function assignRe(Request $request){
 
         PermissionController::checkPermission('create-asset-requests');
         $request->validate([
@@ -48,6 +50,9 @@ class AssetRequestController extends Controller
         ]);
     }
 
+    
+
+    //admin ka approve button click yin
     public function approve(Request $request, $id)
     {
         PermissionController::checkPermission('approve-asset-requests');
@@ -78,6 +83,33 @@ class AssetRequestController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Asset request approved successfully',
+        ], 200);
+
+    }
+
+    public function reject(Request $request, $id)
+    {
+        PermissionController::checkPermission('reject-asset-requests');
+        $assetRequest = AssetRequest::findOrFail($id);
+
+        if ($assetRequest->status != 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Asset request is not pending',
+                'data'=>$assetRequest->id
+            ], 400);
+        }
+
+        $assetRequest->user->notify(new AssetRejectNotification($assetRequest));
+
+        $assetRequest->update(['status' => 'reject']);
+
+        $asset=Asset::where('asset_id',$assetRequest->asset_id)->firstOrFail();
+        $asset->update(['status'=>'available']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Asset request rejected successfully',
         ], 200);
 
     }

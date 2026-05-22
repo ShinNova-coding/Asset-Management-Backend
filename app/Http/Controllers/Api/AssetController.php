@@ -59,6 +59,9 @@ class AssetController extends Controller
                 'category_id' => 'required|exists:categories,id',
                 'status' => 'required|string',
                 'condition' => 'required|string',
+                'model'=>'required|string',
+                'ram_capacity'=>'required|string',
+                'storage'=>'required|string',
                 'image' => 'required|string'
             ]);
 
@@ -72,6 +75,9 @@ class AssetController extends Controller
                 'category_id' => $request->category_id,
                 'status' => $request->status,
                 'condition' => $request->condition,
+                'model'=>$request->model,
+                'ram_capacity'=>$request->ram_capacity,
+                'storage'=>$request->storage
             ]);
 
             if ($request->has('image') && $request->filled('image')) {
@@ -160,7 +166,9 @@ class AssetController extends Controller
                 'category_id' => 'required|exists:categories,id',
                 'status' => 'required|string',
                 'condition' => 'required|string',
-                'image' => 'required|string'
+                'image' => 'required|string',
+                'ram_capacity'=>'required|string',
+                'storage'=>'required|string',
             ]);
 
             if ($request->has('image') && $request->filled('image')) {

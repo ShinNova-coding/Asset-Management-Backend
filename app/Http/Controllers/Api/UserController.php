@@ -151,7 +151,7 @@ class UserController extends Controller
                 AssetAssignmentController::suspend($user->employee_id);
             }
 
-            if($request->status ==='inactive'){
+            if($request->status ==='resign'){
                 AssetAssignmentController::inactive($user->employee_id);
             }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\Maintenance;
+use DB;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -25,31 +26,56 @@ class MaintenanceController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public static function store(Request $request)
     {
         try {
             $request->validate([
                 'asset_id' => 'required|exists:assets,asset_id',
+                'employee_id'=>'required|exists:users,employee_id',
+                'category_id'=>'required|exists:categories,category_id',
                 'vendor' => 'required|string',
                 'vendor_phno' => 'required|string',
                 'vendor_address' => 'required|string',
                 'cost' => 'required|integer',
-                'maintenance_date' => 'required|date'
+                'remark'=>'required',
+                'maintenance_date' => 'required|date',
+                'status'=>'required',
+                'image'=>'required'
             ]);
 
+            
             $asset = Asset::where('asset_id', $request->asset_id)->first();
             if ($asset->status !== 'available') {
                 return response()->json(['success' => false, 'message' => 'Asset not available for maintenance'], 400);
             }
+            $maintenance=DB::transaction(function () use ($request){
             $maintenance = Maintenance::create([
                 'asset_id' => $request->asset_id,
+                'employee_id'=>$request->employee_id,
+                'category_id'=>$request->category_id,
                 'vendor' => $request->vendor,
                 'vendor_phno' => $request->vendor_phno,
                 'vendor_address' => $request->vendor_address,
                 'cost' => $request->cost,
-                'status' => 'under-repair',
+                'status' =>$request->status,
+                'remark'=>$request->remark,
                 'maintenance_date' => $request->maintenance_date
             ]);
+
+            if($request->has('image')&&$request->filled('image')){
+                $maintenance->addMediaFromBase64($request->image)
+                            ->toMediaCollection('images');
+            }
+
+            return $maintenance;
+            });
+
+            $image_url = $maintenance->getFirstMediaUrl('images') ?: null;
+            $preview_url = $maintenance->getFirstMediaUrl('images', 'preview') ?: null;
+
+            $maintenance->image_url = $image_url;
+            $maintenance->preview_url = $preview_url;
+
             $asset->update(['status' => 'maintenance']);
             return response()->json(['success' => true, 'data' => $maintenance], 201);
         } catch (Exception $e) {
@@ -64,6 +90,12 @@ class MaintenanceController extends Controller
     {
         try {
             $maintenance = Maintenance::with('asset')->find($id);
+
+            $image_url = $maintenance->getFirstMediaUrl('images') ?: null;
+            $preview_url = $maintenance->getFirstMediaUrl('images', 'preview') ?: null;
+
+            $maintenance->image_url = $image_url;
+            $maintenance->preview_url = $preview_url;
             if (!$maintenance) {
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
@@ -85,14 +117,30 @@ class MaintenanceController extends Controller
             }
 
             $request->validate([
+                'asset_id' => 'required|exists:assets,asset_id',
+                'employee_id'=>'required|exists:users,employee_id',
+                'category_id'=>'required|exists:categories,category_id',
                 'vendor' => 'required|string',
                 'vendor_phno' => 'required|string',
                 'vendor_address' => 'required|string',
                 'cost' => 'required|integer',
+                'status'=>'required',
                 'maintenance_date' => 'required|date',
             ]);
 
-            $maintenance->update($request->only(['vendor', 'vendor_phno', 'vendor_address', 'cost', 'status', 'maintenance_date', 'completed_date']));
+            if ($request->has('image') && $request->filled('image')) {
+                $maintenance->clearMediaCollection('images');
+                $maintenance->addMediaFromBase64($request->image)
+                    ->toMediaCollection('images');
+            }
+
+            $maintenance->update($request->except('image'));
+
+             $image_url = $maintenance->getFirstMediaUrl('images') ?: null;
+            $preview_url = $maintenance->getFirstMediaUrl('images', 'preview') ?: null;
+
+            $maintenance->image_url = $image_url;
+            $maintenance->preview_url = $preview_url;
 
             return response()->json(['success' => true, 'data' => $maintenance], 200);
         } catch (Exception $e) {

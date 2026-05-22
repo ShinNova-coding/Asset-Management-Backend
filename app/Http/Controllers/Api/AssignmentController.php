@@ -118,6 +118,28 @@ class AssignmentController extends Controller
         }
     }
 
+    public function getEmployeeAsset(string $id){
+        PermissionController::checkPermission('view-assignments');
+        try{
+        $assignment=Assignment::with('assets')
+                            ->where('employee_id',$id)
+                            ->where('status','active')
+                            ->get()
+                            ->pluck('assets');
+
+        return response()->json([
+            'success'=>false,
+            'data'=>$assignment,
+            'Message'=>'Asset retrieved according to employee assign'
+        ]);
+        }catch(Exception $e){
+            return response()->json([
+                'success'=>false,
+                'message'=>$e->getMessage()
+            ]);
+        }
+    }
+
     public static function release($id)
     {
         PermissionController::checkPermission('update-assignments');

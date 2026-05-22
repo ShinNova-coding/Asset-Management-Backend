@@ -15,11 +15,15 @@ return new class extends Migration
             $table->id();
             $table->string('asset_id');
             $table->foreign('asset_id')->references('asset_id')->on('assets')->cascadeOnDelete();
+            $table->string('employee_id'); 
+            $table->foreign('employee_id')->references('employee_id')->on('users')->cascadeOnDelete();
+            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
             $table->string('vendor');
             $table->string('vendor_phno');
             $table->string('vendor_address');
             $table->integer('cost');
-            $table->string('status')->default('completed');
+            $table->string('remark')->nullable();
+            $table->string('status')->default('pending');
             $table->date('maintenance_date');
             $table->date('completed_date')->nullable();
             $table->timestamps();

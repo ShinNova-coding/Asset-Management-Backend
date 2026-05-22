@@ -10,13 +10,12 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('asset_requests', function (Blueprint $table) {
+        Schema::create('maintenance_requests', function (Blueprint $table) {
             $table->id();
+            $table->foreign('asset_id')->references('asset_id')->on('assets')->cascadeOnDelete();
             $table->string('employee_id');
             $table->foreign('employee_id')->references('employee_id')->on('users')->cascadeOnDelete();
-            $table->string('asset_id');
-            $table->foreign('asset_id')->references('asset_id')->on('assets')->cascadeOnDelete();
-            
+            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
             $table->enum('status', ['pending', 'approved', 'rejected'])
                 ->default('pending');
             $table->timestamps();
@@ -28,6 +27,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('asset_requests');
+        Schema::dropIfExists('maintenance_requests');
     }
 };
