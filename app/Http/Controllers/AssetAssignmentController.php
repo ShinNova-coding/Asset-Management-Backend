@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class AssetAssignmentController extends Controller
 {
-    public static function suspend(string $id){
+    public static function suspended(string $id){
 
     PermissionController::checkPermission('update-users');
     $user=User::find($id);
@@ -20,16 +20,14 @@ class AssetAssignmentController extends Controller
     $assignments=Assignment::where('employee_id',$id)
                             ->where('status','active')
                             ->get();
-
-    $assets=Asset::whereIn('id', $assignments->pluck('asset_id'))->get();
-
+    
     foreach($assignments as $assignment){
-        $user->notify(new AssetAssignmentNotification($assignment));
-        }
+        $assignment->update(['status'=>'returned']);
+    }
 
-        $assignments->pluck('id')->update(['status'=>'returned']);
-
-        foreach($assets as $asset){
+        $assets=Asset::whereIn('id', $assignments->pluck('asset_id'))->get();
+    
+    foreach($assets as $asset){
             $asset->update(['status'=>'available']);
         }
 
@@ -39,12 +37,12 @@ class AssetAssignmentController extends Controller
         ], 200);
     }
 
-    public static function resign(string $id){
+    public static function resigned(string $id){
 
         PermissionController::checkPermission('update-users');
         $user=User::find($id);
 
-        $user->update(['status'=>'resign']);
+        $user->update(['status'=>'resigned']);
 
         $assignments=Assignment::where('employee_id',$id)
                                 ->where('status','active')
@@ -52,16 +50,18 @@ class AssetAssignmentController extends Controller
 
         $assets=Asset::whereIn('id', $assignments->pluck('asset_id'))->get();
 
-        foreach($assignments as $assignment){
-        $user->notify(new AssetAssignmentNotification($assignment));
-        }
+        
 
-        $assignments->pluck('id')->update(['status'=>'returned']);
+        foreach($assignments as $assignment){
+            $assignment->update(['status'=>'returned']);
+        }
 
     
         foreach($assets as $asset){
             $asset->update(['status'=>'available']);
-        }        return response()->json([
+        }        
+        
+        return response()->json([
             'success' => true,
             'message' => 'User inactivated and active assignments returned successfully'
         ], 200);

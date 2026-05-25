@@ -15,14 +15,18 @@ use Spatie\Permission\Models\Permission;
 class AssetRequestController extends Controller
 {
     //user ka assign button click yin
-    public function assignRe(Request $request){
+    public function assignRequest(Request $request,$id){
 
         PermissionController::checkPermission('create-asset-requests');
-        $request->validate([
-            'asset_id'=>'required'
-        ]);
+        $asset=Asset::where('asset_id',$id)->first();
+        if(!$asset){
+            return response()->json([
+                'success'=>false,   
+                'message'=>'Asset not found'
+            ],404);
+        }
 
-        $isassigned=AssetRequest::where('asset_id',$request->asset_id)
+        $isassigned=AssetRequest::where('asset_id',$asset->asset_id)
                                 ->where('employee_id',auth()->user()->employee_id)
                                 ->where('status','approved')
                                 ->exists();
@@ -34,11 +38,10 @@ class AssetRequestController extends Controller
             ]);
         }
 
-        $asset=Asset::where('asset_id',$request->asset_id);
         $asset->update(['status'=>'pending']);
 
         $assetrequest=AssetRequest::create([
-            'asset_id'=>$request->asset_id,
+            'asset_id'=>$asset->asset_id,
             'employee_id'=>auth()->user()->employee_id,
             'status'=>'pending'
         ]);
@@ -56,7 +59,13 @@ class AssetRequestController extends Controller
     public function approve(Request $request, $id)
     {
         PermissionController::checkPermission('approve-asset-requests');
-        $assetRequest = AssetRequest::findOrFail($id);
+        $assetRequest = AssetRequest::where('asset_id', $id)->first();
+        if(!$assetRequest){
+            return response()->json([
+                'success' => false,
+                'message' => 'Asset request not found',
+            ], 404);
+        }
 
         if ($assetRequest->status != 'pending') {
             return response()->json([
@@ -69,11 +78,9 @@ class AssetRequestController extends Controller
          $assignment = Assignment::create([
             'employee_id' => $assetRequest->employee_id,
             'asset_id' => $assetRequest->asset_id,
-            'status' => 'assigned',
-            'assign_date' => now(),
+            'status' => 'active',
+            'assigned_date' => now(),
         ]);
-
-        $assetRequest->user->notify(new AssetApprovedNotification($assignment));
 
         $assetRequest->update(['status' => 'approved']);
 
@@ -87,10 +94,10 @@ class AssetRequestController extends Controller
 
     }
 
-    public function reject(Request $request, $id)
+    public function cancel(Request $request, $id)
     {
-        PermissionController::checkPermission('reject-asset-requests');
-        $assetRequest = AssetRequest::findOrFail($id);
+        PermissionController::checkPermission('cancel-asset-requests');
+        $assetRequest = AssetRequest::where('asset_id', $id)->first();
 
         if ($assetRequest->status != 'pending') {
             return response()->json([
@@ -100,16 +107,15 @@ class AssetRequestController extends Controller
             ], 400);
         }
 
-        $assetRequest->user->notify(new AssetRejectNotification($assetRequest));
 
-        $assetRequest->update(['status' => 'reject']);
+        $assetRequest->update(['status' => 'cancel']);
 
         $asset=Asset::where('asset_id',$assetRequest->asset_id)->firstOrFail();
         $asset->update(['status'=>'available']);
 
         return response()->json([
             'success' => true,
-            'message' => 'Asset request rejected successfully',
+            'message' => 'Asset request canceled successfully',
         ], 200);
 
     }

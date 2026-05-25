@@ -143,16 +143,16 @@ class UserController extends Controller
                 'position' => 'nullable|string|max:255',
                 'phone_number' => 'nullable|string|max:20',
                 'role' => 'required',
-                'status' => 'required|in:active,inactive,suspended',
+                'status' => 'required|in:active,inactive,suspended,resigned',
                 'image' => 'required|string'
             ]);
 
             if($request->status ==='suspended'){
-                AssetAssignmentController::suspend($user->employee_id);
+                AssetAssignmentController::suspended($user->employee_id);
             }
 
-            if($request->status ==='resign'){
-                AssetAssignmentController::inactive($user->employee_id);
+            if($request->status ==='resigned'){
+                AssetAssignmentController::resigned($user->employee_id);
             }
 
             $data = $request->except('password', 'role', 'image');
@@ -220,14 +220,6 @@ class UserController extends Controller
             ]);
         }
     }
-     public function getNotification(){
-        PermissionController::checkPermission('get-notifications');
-    $notification=Auth::user()->unreadNotifications();
-    return response()->json([
-        'success'=>true,
-        'message'=>'notification send successfully',
-        'data'=>$notification
-    ]);
-    }
+    
 
 }

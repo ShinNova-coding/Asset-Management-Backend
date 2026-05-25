@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('serial_number')->unique();
             $table->date('purchased_date');
-            $table->date('warranty_expiry');
+            $table->integer('warranty_period');
             $table->string('model');
             $table->string('ram_capacity');
             $table->string('storage');

@@ -51,14 +51,21 @@ class PermissionSeeder extends Seeder
             'update-assignments',
             'delete-assignments',
 
-            'view-maintenance',
-            'create-maintenance',  
-            'update-maintenance',
-            'delete-maintenance',
+            'view-maintenances',
+            'create-maintenances',  
+            'update-maintenances',
+            'delete-maintenances',
 
             'get-notifications',
+
             'create-asset-requests',
-            'approve-asset-requests'
+            'approve-asset-requests',
+            'cancel-asset-requests',
+
+            'create-maintenance-requests',
+            'approve-maintenance-requests',
+            'cancel-maintenance-requests',
+            'update-maintenance-requests',
         ];
 
         foreach ($permissions as $permission) {

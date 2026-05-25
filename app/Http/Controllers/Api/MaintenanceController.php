@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PermissionController;
 use App\Models\Asset;
 use App\Models\Maintenance;
 use DB;
@@ -16,6 +17,7 @@ class MaintenanceController extends Controller
      */
     public function index()
     {
+        PermissionController::checkPermission('view-maintenances');
         $maintenances = Maintenance::with('asset')->latest()->get();
         if ($maintenances->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'No maintenances found'], 404);
@@ -28,6 +30,7 @@ class MaintenanceController extends Controller
      */
     public static function store(Request $request)
     {
+        PermissionController::checkPermission('create-maintenances');
         try {
             $request->validate([
                 'asset_id' => 'required|exists:assets,asset_id',
@@ -40,7 +43,7 @@ class MaintenanceController extends Controller
                 'remark'=>'required',
                 'maintenance_date' => 'required|date',
                 'status'=>'required',
-                'image'=>'required'
+                'receipt_image'=>'required'
             ]);
 
             
@@ -62,16 +65,16 @@ class MaintenanceController extends Controller
                 'maintenance_date' => $request->maintenance_date
             ]);
 
-            if($request->has('image')&&$request->filled('image')){
-                $maintenance->addMediaFromBase64($request->image)
-                            ->toMediaCollection('images');
+            if($request->has('receipt_image')&&$request->filled('receipt_image')){
+                $maintenance->addMediaFromBase64($request->receipt_image)
+                            ->toMediaCollection('receipts');
             }
 
             return $maintenance;
             });
 
-            $image_url = $maintenance->getFirstMediaUrl('images') ?: null;
-            $preview_url = $maintenance->getFirstMediaUrl('images', 'preview') ?: null;
+            $image_url = $maintenance->getFirstMediaUrl('receipts') ?: null;
+            $preview_url = $maintenance->getFirstMediaUrl('receipts', 'preview') ?: null;
 
             $maintenance->image_url = $image_url;
             $maintenance->preview_url = $preview_url;
@@ -88,11 +91,12 @@ class MaintenanceController extends Controller
      */
     public function show($id)
     {
+        PermissionController::checkPermission('view-maintenances');
         try {
             $maintenance = Maintenance::with('asset')->find($id);
 
-            $image_url = $maintenance->getFirstMediaUrl('images') ?: null;
-            $preview_url = $maintenance->getFirstMediaUrl('images', 'preview') ?: null;
+            $image_url = $maintenance->getFirstMediaUrl('receipts') ?: null;
+            $preview_url = $maintenance->getFirstMediaUrl('receipts', 'preview') ?: null;
 
             $maintenance->image_url = $image_url;
             $maintenance->preview_url = $preview_url;
@@ -128,16 +132,16 @@ class MaintenanceController extends Controller
                 'maintenance_date' => 'required|date',
             ]);
 
-            if ($request->has('image') && $request->filled('image')) {
-                $maintenance->clearMediaCollection('images');
-                $maintenance->addMediaFromBase64($request->image)
-                    ->toMediaCollection('images');
+            if ($request->has('receipt_image') && $request->filled('receipt_image')) {
+                $maintenance->clearMediaCollection('receipts');
+                $maintenance->addMediaFromBase64($request->receipt_image)
+                    ->toMediaCollection('receipts');
             }
 
-            $maintenance->update($request->except('image'));
+            $maintenance->update($request->except('receipt_image'));
 
-             $image_url = $maintenance->getFirstMediaUrl('images') ?: null;
-            $preview_url = $maintenance->getFirstMediaUrl('images', 'preview') ?: null;
+             $image_url = $maintenance->getFirstMediaUrl('receipts') ?: null;
+            $preview_url = $maintenance->getFirstMediaUrl('receipts', 'preview') ?: null;
 
             $maintenance->image_url = $image_url;
             $maintenance->preview_url = $preview_url;
@@ -154,6 +158,7 @@ class MaintenanceController extends Controller
      */
     public function destroy(string $id)
     {
+        PermissionController::checkPermission('delete-maintenances');
         try{
             $maintenance=Maintenance::find($id);
             if(!$maintenance){
@@ -167,39 +172,5 @@ class MaintenanceController extends Controller
         }
     }
 
-    public function complete($id)
-    {
-        try {
-            $maintenance = Maintenance::find($id);
-            if (!$maintenance) {
-                return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
-            }
-            $maintenance->update([
-                'status' => 'completed',
-                'completed_date' => now()
-            ]);
-            Asset::where('asset_id', $maintenance->asset_id)->update(['status' => 'available']);
-            return response()->json(['success' => true, 'data' => $maintenance], 200);
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    public function cancel($id)
-    {
-        try {
-            $maintenance = Maintenance::find($id);
-            if (!$maintenance) {
-                return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
-            }
-            $maintenance->update([
-                'status' => 'canceled',
-                'completed_date' => now()
-            ]);
-            Asset::where('asset_id', $maintenance->asset_id)->update(['status' => 'available']);
-            return response()->json(['success' => true, 'data' => $maintenance], 200);
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
+   
 } 

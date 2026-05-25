@@ -16,9 +16,17 @@ class AssignmentController extends Controller
     public function index()
     {
         PermissionController::checkPermission('view-assignments');
-        $assignments = Assignment::with(['asset', 'user'])->latest()->get();
+        $assignments = Assignment::with(['asset'])->latest()->get();
+        return response()->json([
+            'success' => true,
+            'data' => $assignments,
+            'message' => 'Assignments retrieved successfully'
+        ], 200);
         if ($assignments->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'No assignments found'], 404);
+            return response()->json([
+                'success' => false, 
+                'message' => 'No assignments found'
+                ], 404);
         }
 
         }
@@ -118,59 +126,8 @@ class AssignmentController extends Controller
         }
     }
 
-    public function getEmployeeAsset(string $id){
-        PermissionController::checkPermission('view-assignments');
-        try{
-        $assignment=Assignment::with('assets')
-                            ->where('employee_id',$id)
-                            ->where('status','active')
-                            ->get()
-                            ->pluck('assets');
+    
 
-        return response()->json([
-            'success'=>false,
-            'data'=>$assignment,
-            'Message'=>'Asset retrieved according to employee assign'
-        ]);
-        }catch(Exception $e){
-            return response()->json([
-                'success'=>false,
-                'message'=>$e->getMessage()
-            ]);
-        }
-    }
-
-    public static function release($id)
-    {
-        PermissionController::checkPermission('update-assignments');
-        try {
-            $assignment = Assignment::findOrFail($id);      
-
-            if ($assignment->status !== 'active') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Assignment is not active'
-                ], 400);
-            }
-
-            $assignment->update([
-                'status' => 'returned',
-                'return_date' => now()
-            ]);
-
-            Asset::where('asset_id', $assignment->asset_id)->update(['status' => 'available']);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Asset returned successfully'
-            ], 200);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
+   
     
 }
