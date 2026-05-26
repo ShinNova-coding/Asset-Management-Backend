@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\PermissionController;
 use App\Models\Asset;
 use App\Models\Assignment;
 use App\Models\User;
-use App\Notifications\AssetAssignmentNotification;
 use Illuminate\Http\Request;
 
-class AssetAssignmentController extends Controller
+class UserSuspendResignController extends Controller
 {
     public static function suspended(string $id){
 
@@ -68,5 +69,4 @@ class AssetAssignmentController extends Controller
     }
 
     
-
 }

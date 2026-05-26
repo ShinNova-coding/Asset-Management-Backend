@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Models\Asset;
 use App\Models\Assignment;
 use Illuminate\Http\Request;
@@ -16,7 +16,10 @@ class AssignmentController extends Controller
     public function index()
     {
         PermissionController::checkPermission('view-assignments');
-        $assignments = Assignment::with(['asset'])->latest()->get();
+        $assignments = Assignment::with(['asset'])
+                                  ->where('status','active')
+                                  ->latest()->get();
+                                  
         return response()->json([
             'success' => true,
             'data' => $assignments,

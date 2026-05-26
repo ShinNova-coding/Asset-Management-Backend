@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Models\Asset;
 use App\Models\Maintenance;
 use DB;
@@ -36,14 +36,17 @@ class MaintenanceController extends Controller
                 'asset_id' => 'required|exists:assets,asset_id',
                 'employee_id'=>'required|exists:users,employee_id',
                 'category_id'=>'required|exists:categories,category_id',
+                'issue_type'=>'required|string',
+                'problem_description'=>'required|string',
                 'vendor' => 'required|string',
                 'vendor_phno' => 'required|string',
                 'vendor_address' => 'required|string',
                 'cost' => 'required|integer',
                 'remark'=>'required',
+                'duration'=>'required|integer',
+                'payment'=>'required|integer',
                 'maintenance_date' => 'required|date',
                 'status'=>'required',
-                'receipt_image'=>'required'
             ]);
 
             
@@ -56,29 +59,25 @@ class MaintenanceController extends Controller
                 'asset_id' => $request->asset_id,
                 'employee_id'=>$request->employee_id,
                 'category_id'=>$request->category_id,
+                'issue_type'=>$request->issue_type,
+                'problem_description'=>$request->problem_description,
                 'vendor' => $request->vendor,
                 'vendor_phno' => $request->vendor_phno,
                 'vendor_address' => $request->vendor_address,
                 'cost' => $request->cost,
                 'status' =>$request->status,
                 'remark'=>$request->remark,
+                'duration'=>$request->duration,
+                'payment'=>$request->payment,
                 'maintenance_date' => $request->maintenance_date
             ]);
 
-            if($request->has('receipt_image')&&$request->filled('receipt_image')){
-                $maintenance->addMediaFromBase64($request->receipt_image)
-                            ->toMediaCollection('receipts');
-            }
+          
 
             return $maintenance;
             });
 
-            $image_url = $maintenance->getFirstMediaUrl('receipts') ?: null;
-            $preview_url = $maintenance->getFirstMediaUrl('receipts', 'preview') ?: null;
-
-            $maintenance->image_url = $image_url;
-            $maintenance->preview_url = $preview_url;
-
+           
             $asset->update(['status' => 'maintenance']);
             return response()->json(['success' => true, 'data' => $maintenance], 201);
         } catch (Exception $e) {
@@ -95,11 +94,6 @@ class MaintenanceController extends Controller
         try {
             $maintenance = Maintenance::with('asset')->find($id);
 
-            $image_url = $maintenance->getFirstMediaUrl('receipts') ?: null;
-            $preview_url = $maintenance->getFirstMediaUrl('receipts', 'preview') ?: null;
-
-            $maintenance->image_url = $image_url;
-            $maintenance->preview_url = $preview_url;
             if (!$maintenance) {
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
@@ -120,31 +114,24 @@ class MaintenanceController extends Controller
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
 
-            $request->validate([
+            $updatemaintenance=$request->validate([
                 'asset_id' => 'required|exists:assets,asset_id',
                 'employee_id'=>'required|exists:users,employee_id',
                 'category_id'=>'required|exists:categories,category_id',
+                'issue_type'=>'required|string',
+                'problem_description'=>'required|string',
                 'vendor' => 'required|string',
                 'vendor_phno' => 'required|string',
                 'vendor_address' => 'required|string',
                 'cost' => 'required|integer',
+                'remark'=>'required',
+                'duration'=>'required|integer',
+                'payment'=>'required|integer',
                 'status'=>'required',
                 'maintenance_date' => 'required|date',
             ]);
 
-            if ($request->has('receipt_image') && $request->filled('receipt_image')) {
-                $maintenance->clearMediaCollection('receipts');
-                $maintenance->addMediaFromBase64($request->receipt_image)
-                    ->toMediaCollection('receipts');
-            }
-
-            $maintenance->update($request->except('receipt_image'));
-
-             $image_url = $maintenance->getFirstMediaUrl('receipts') ?: null;
-            $preview_url = $maintenance->getFirstMediaUrl('receipts', 'preview') ?: null;
-
-            $maintenance->image_url = $image_url;
-            $maintenance->preview_url = $preview_url;
+            $maintenance->update($updatemaintenance);
 
             return response()->json(['success' => true, 'data' => $maintenance], 200);
         } catch (Exception $e) {

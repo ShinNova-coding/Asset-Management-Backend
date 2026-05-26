@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Models\Category;
 use Exception;
 use App\Http\Controllers\Controller;

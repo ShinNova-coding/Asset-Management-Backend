@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\AssetAssignmentController;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Models\Assignment;
 use App\Models\User;
 use Auth;
@@ -22,17 +22,23 @@ class UserController extends Controller
     public function index()
     {
         PermissionController::checkPermission('view-users');
-        $user = User::with('roles')->get();
-        if ($user->isEmpty()) {
+        $users = User::with('roles')->paginate(50);
+        if ($users->isEmpty()) {
             return response()->json([
                 'success' => false,
                 'message' => 'no user found',
             ]);
         }
+        
+         foreach ($users as $user) {
+            /** @var \App\Models\User $user */
+            $user->image_url = $user->getFirstMediaUrl('images') ?: null;
+            $user->preview_url = $user->getFirstMediaUrl('images', 'preview') ?: null;
+        }
 
         return response()->json([
             'success' => true,
-            'data' => $user,
+            'data' => $users,
             'message' => 'User found successfully!!',
         ], 200);
     }

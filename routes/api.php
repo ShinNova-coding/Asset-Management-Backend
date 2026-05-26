@@ -3,17 +3,20 @@
 use App\Http\Controllers\Admin\AssetRequestController;
 use App\Http\Controllers\Admin\MaintenanceRequestController;
 use App\Http\Controllers\Api\AssignmentController;
+use App\Http\Controllers\Api\AssignmentHistoryController;
+use App\Http\Controllers\Api\ChangePasswordController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\GetEmployeeAssignmentController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\AssetController;
-use App\Http\Controllers\AssetAssignmentController;
-use App\Http\Controllers\ChangePasswordController;
-use App\Http\Controllers\ReturnAssignmentController;
+use App\Http\Controllers\Api\UserSuspendResignController;
+use App\Http\Controllers\Api\ReturnAssignmentController;
 use Illuminate\Support\Facades\Route;
 
 //Login routes
@@ -34,7 +37,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/requests/{id}/cancel', [AssetRequestController::class, 'cancel'])->name('assignment.cancel');
 
     Route::resource('assignment', AssignmentController::class);
-    Route::get('/assignment/{id}/asset',[AssignmentController::class,'getEmployeeAsset'])->name('assignment.getEmployeeAsset');
+    Route::get('/assignment/history',[AssignmentHistoryController::class,'assignmentHistory'])->name('assignment.history');
+    Route::get('/assignment/{id}/asset',[GetEmployeeAssignmentController::class,'getEmployeeAsset'])->name('assignment.getEmployeeAsset');
     Route::post('/assignment/{id}/return', [ReturnAssignmentController::class, 'returnAssignment'])->name('assignment.return');
 
     Route::resource('maintenance', MaintenanceController::class);
@@ -44,10 +48,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/requests/maintenance/{id}/complete', [MaintenanceRequestController::class, 'complete'])->name('maintenance.complete');
     Route::post('/admin/requests/maintenance/{id}/cancel', [MaintenanceRequestController::class, 'cancel'])->name('maintenance.cancel');
 
-    Route::get('/dashboard', [DashboardController::class, 'dashboardview'])->name('dashboard.view');
+    Route::get('/report/user', [ReportController::class, 'userReport'])->name('report.user');
+    Route::get('/report/asset', [ReportController::class, 'assetReport'])->name('report.asset');
+    Route::get('/report/category', [ReportController::class, 'categoryReport'])->name('report.category');
 
-    Route::post('/admin/users/{id}/suspended', [AssetAssignmentController::class, 'suspended'])->name('user.suspended');
-    Route::post('/admin/users/{id}/resigned', [AssetAssignmentController::class, 'resigned'])->name('user.resigned');
+    Route::get('/dashboard',[DashboardController::class,'dashboardview'])->name('dashboard');
+
+    Route::post('/admin/users/{id}/suspended', [UserSuspendResignController::class, 'suspended'])->name('user.suspended');
+    Route::post('/admin/users/{id}/resigned', [UserSuspendResignController::class, 'resigned'])->name('user.resigned');
     Route::resource('user', UserController::class);
 
     Route::resource('role', RoleController::class);

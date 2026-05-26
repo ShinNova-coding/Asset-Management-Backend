@@ -1,12 +1,14 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\PermissionController;
 use App\Models\Assignment;
 use Exception;
 use Illuminate\Http\Request;
 
-class GetEmployeeAssignment extends Controller
+class GetEmployeeAssignmentController extends Controller
 {
     public function getEmployeeAsset(string $id){
         

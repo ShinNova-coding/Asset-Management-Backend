@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\Api\PermissionController;
 use Exception;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;

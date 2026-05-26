@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Models\Asset;
 use DB;
 use Exception;
@@ -20,7 +20,8 @@ class AssetController extends Controller
         PermissionController::checkPermission('view-assets');
         try {
 
-            $assets = Asset::with('category')->latest()->get();
+            $assets = Asset::with('category')->latest()->paginate(50);
+
 
             if ($assets->isEmpty()) {
                 return response()->json([
@@ -29,7 +30,12 @@ class AssetController extends Controller
                 ], 404);
             }
 
-            
+        foreach ($assets as $asset) {
+            /** @var \App\Models\Asset $asset */
+            $asset->image_url = $asset->getFirstMediaUrl('images') ?: null;
+            $asset->preview_url = $asset->getFirstMediaUrl('images', 'preview') ?: null;
+        }
+
             return response()->json([
                 'success' => true,
                 'data' => $assets

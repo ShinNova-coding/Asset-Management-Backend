@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Models\Asset;
 use App\Models\Category;
 use App\Models\Maintenance;
@@ -138,6 +138,8 @@ class MaintenanceRequestController extends Controller
                 'vendor_phno' => 'required|string',
                 'vendor_address' => 'required|string',
                 'cost' => 'required|integer',
+                'duration'=>'required|integer',
+                'payment'=>'required|string'
             ]);
             $maintenance->update([
                 'status' => 'completed',
@@ -146,6 +148,8 @@ class MaintenanceRequestController extends Controller
                 'vendor_phno' => $request->vendor_phno,
                 'vendor_address' => $request->vendor_address,
                 'cost' => $request->cost,
+                'duration'=>$request->duration,
+                'payment'=>$request->payment
             ]);
             Asset::where('asset_id', $maintenance->asset_id)->update(['status' => 'available']);
             return response()->json([

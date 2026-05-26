@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\Assignment;
 use Exception;
@@ -9,7 +10,7 @@ use Illuminate\Http\Request;
 
 class ReturnAssignmentController extends Controller
 {
-     public static function returnAssignment($id)
+         public static function returnAssignment($id)
     {
         PermissionController::checkPermission('update-assignments');
         try {
