@@ -78,6 +78,7 @@ class MaintenanceRequestController extends Controller
                 'message' => 'Maintenance request not found'
             ], 404);
         }
+
         $maintenanceapprove->update([
             'status' => 'pending',
         ]);
@@ -103,6 +104,7 @@ class MaintenanceRequestController extends Controller
                 'remark' => 'required|string',
             ]);
 
+           
             $maintenance->update([
                 'status' => 'maintenance',
                 'remark' => $request->remark,
@@ -133,6 +135,8 @@ class MaintenanceRequestController extends Controller
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
 
+
+
             $request->validate([
                 'vendor' => 'required|string',
                 'vendor_phno' => 'required|string',
@@ -141,6 +145,7 @@ class MaintenanceRequestController extends Controller
                 'duration'=>'required|integer',
                 'payment'=>'required|string'
             ]);
+
             $maintenance->update([
                 'status' => 'completed',
                 'completed_date' => now(),
@@ -176,6 +181,7 @@ class MaintenanceRequestController extends Controller
                     'message' => 'Maintenance not found'
                 ], 404);
             }
+            
             $maintenance->update([
                 'status' => 'canceled',
                 'completed_date' => now()

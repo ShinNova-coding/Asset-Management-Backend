@@ -154,11 +154,11 @@ class UserController extends Controller
             ]);
 
             if($request->status ==='suspended'){
-                AssetAssignmentController::suspended($user->employee_id);
+                UserSuspendResignController::suspended($user->employee_id);
             }
 
             if($request->status ==='resigned'){
-                AssetAssignmentController::resigned($user->employee_id);
+                UserSuspendResignController::resigned($user->employee_id);
             }
 
             $data = $request->except('password', 'role', 'image');

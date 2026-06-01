@@ -14,11 +14,20 @@ class GetEmployeeAssignmentController extends Controller
         
         PermissionController::checkPermission('view-assignments');
         try{
-        $assignment=Assignment::with('assets')
+        $assignment=Assignment::with('asset.category','asset.media')
                             ->where('employee_id',$id)
                             ->where('status','active')
                             ->get()
-                            ->pluck('assets');
+                            ->pluck('asset')
+                            ->map(function($asset){
+                                if($asset){
+                               $asset->image_url = $asset->getFirstMediaUrl('images') ?: null;
+
+                               unset($asset->media);
+                                }
+                                return $asset;
+                            });
+                            
 
         return response()->json([
             'success'=>false,

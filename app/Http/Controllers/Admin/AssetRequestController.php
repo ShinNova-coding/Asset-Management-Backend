@@ -43,7 +43,7 @@ class AssetRequestController extends Controller
         $assetrequest=AssetRequest::create([
             'asset_id'=>$asset->asset_id,
             'employee_id'=>auth()->user()->employee_id,
-            'status'=>'pending'
+            'status'=>'requested'
         ]);
 
         return response()->json([
@@ -67,10 +67,10 @@ class AssetRequestController extends Controller
             ], 404);
         }
 
-        if ($assetRequest->status != 'pending') {
+        if ($assetRequest->status != 'requested') {
             return response()->json([
                 'success' => false,
-                'message' => 'Asset request is not pending',
+                'message' => 'Asset request is not available',
                 'data'=>$assetRequest->id
             ], 400);
         }
@@ -99,10 +99,10 @@ class AssetRequestController extends Controller
         PermissionController::checkPermission('cancel-asset-requests');
         $assetRequest = AssetRequest::where('asset_id', $id)->first();
 
-        if ($assetRequest->status != 'pending') {
+        if ($assetRequest->status != 'requested') {
             return response()->json([
                 'success' => false,
-                'message' => 'Asset request is not pending',
+                'message' => 'Asset request is not available',
                 'data'=>$assetRequest->id
             ], 400);
         }

@@ -236,4 +236,47 @@ class AssetController extends Controller
             ], 500);
         }
     }
+
+
+    public function onlyTrashed(){
+        PermissionController::checkPermission('view-assets');
+        try{
+            $trashAsset=Asset::onlyTrashed()->with('category')->latest()->get();
+            return response()->json([
+                'success'=>true,
+                'data'=>$trashAsset,
+                'message'=>'Trashed asset retrieved succesfully'
+            ],200);
+    }catch(Exception $e){
+        return response()->json([
+        'success'=>false,
+        'message'=>$e->getMessage(),
+        ],500);
+    }
+}
+
+    public function restore(string $id){
+        PermissionController::checkPermission('update-assets');
+        try{
+            $asset=Asset::onlyTrashed()->firstWhere('asset_id',$id);
+            if(!$asset){
+                return response()->json([
+                    'success'=>false,
+                    'message'=>'No trashed asset found'
+                ]);
+            }
+
+            $asset->restore();
+
+            return response()->json([
+                'success'=>true,
+                'message'=>'Trashed Asset restore successfully'
+            ]);
+        }catch(Exception $e){
+            return response()->json([
+                'success'=>false,
+                'message'=>$e->getMessage()
+            ]);
+        }
+    }
 }

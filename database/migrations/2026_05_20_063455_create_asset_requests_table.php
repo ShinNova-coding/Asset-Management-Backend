@@ -16,9 +16,8 @@ return new class extends Migration {
             $table->foreign('employee_id')->references('employee_id')->on('users')->cascadeOnDelete();
             $table->string('asset_id');
             $table->foreign('asset_id')->references('asset_id')->on('assets')->cascadeOnDelete();
-            
-            $table->enum('status', ['pending', 'approved', 'rejected'])
-                ->default('pending');
+            $table->enum('status', ['requested', 'approved', 'rejected','returned'])
+                ->default('requested');
             $table->timestamps();
         });
     }

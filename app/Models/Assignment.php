@@ -22,4 +22,5 @@ class Assignment extends Model
     {
         return $this->belongsTo(User::class, 'employee_id', 'employee_id');
     }
+    
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
+use App\Models\AssetRequest;
 use App\Models\Assignment;
 use Exception;
 use Illuminate\Http\Request;
@@ -22,6 +23,11 @@ class ReturnAssignmentController extends Controller
                     'message' => 'Active assignment not found for this asset'
                 ], 404);
             }
+
+            $assetrequest=AssetRequest::where('asset_id',$id);
+            $assetrequest->update([
+                'status'=>'returned'
+            ]);
 
             $assignment->update([
                 'status' => 'returned',

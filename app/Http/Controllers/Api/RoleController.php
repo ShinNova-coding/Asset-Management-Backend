@@ -40,10 +40,12 @@ class RoleController extends Controller
         try{
         $request->validate([
             'name' => 'required|unique:roles,name',
+            'permissions'=>'required|array'
         ]);
 
         $role = Role::create(['name' => $request->name]);
 
+        $role->hasPermissionTo($request->permissions);
         return response()->json([
             'status' => 'success',
             'data' => $role,

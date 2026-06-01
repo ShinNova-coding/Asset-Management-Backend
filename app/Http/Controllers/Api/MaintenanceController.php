@@ -22,6 +22,15 @@ class MaintenanceController extends Controller
         if ($maintenances->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'No maintenances found'], 404);
         }
+        foreach ($maintenances as $maintenance) {
+            /** @var \App\Models\Maintenance $maintenance */
+
+            $image_url = $maintenance->getFirstMediaUrl('evidences') ?: null;
+            $preview_url = $maintenance->getFirstMediaUrl('evidences', 'preview') ?: null;
+
+            $maintenance->image_url = $image_url;
+            $maintenance->preview_url = $preview_url;
+        }
         return response()->json(['success' => true, 'data' => $maintenances], 200);
     }
 
@@ -34,50 +43,59 @@ class MaintenanceController extends Controller
         try {
             $request->validate([
                 'asset_id' => 'required|exists:assets,asset_id',
-                'employee_id'=>'required|exists:users,employee_id',
-                'category_id'=>'required|exists:categories,category_id',
-                'issue_type'=>'required|string',
-                'problem_description'=>'required|string',
+                'employee_id' => 'required|exists:users,employee_id',
+                'category_id' => 'required|exists:categories,category_id',
+                'issue_type' => 'required|string',
+                'problem_description' => 'required|string',
                 'vendor' => 'required|string',
                 'vendor_phno' => 'required|string',
                 'vendor_address' => 'required|string',
                 'cost' => 'required|integer',
-                'remark'=>'required',
-                'duration'=>'required|integer',
-                'payment'=>'required|integer',
+                'remark' => 'required',
+                'duration' => 'required|integer',
+                'payment' => 'required|integer',
                 'maintenance_date' => 'required|date',
-                'status'=>'required',
+                'status' => 'required',
+                'evidence_image' => 'required'
             ]);
 
-            
+
             $asset = Asset::where('asset_id', $request->asset_id)->first();
             if ($asset->status !== 'available') {
                 return response()->json(['success' => false, 'message' => 'Asset not available for maintenance'], 400);
             }
-            $maintenance=DB::transaction(function () use ($request){
-            $maintenance = Maintenance::create([
-                'asset_id' => $request->asset_id,
-                'employee_id'=>$request->employee_id,
-                'category_id'=>$request->category_id,
-                'issue_type'=>$request->issue_type,
-                'problem_description'=>$request->problem_description,
-                'vendor' => $request->vendor,
-                'vendor_phno' => $request->vendor_phno,
-                'vendor_address' => $request->vendor_address,
-                'cost' => $request->cost,
-                'status' =>$request->status,
-                'remark'=>$request->remark,
-                'duration'=>$request->duration,
-                'payment'=>$request->payment,
-                'maintenance_date' => $request->maintenance_date
-            ]);
+            $maintenance = DB::transaction(function () use ($request) {
+                $maintenance = Maintenance::create([
+                    'asset_id' => $request->asset_id,
+                    'employee_id' => $request->employee_id,
+                    'category_id' => $request->category_id,
+                    'issue_type' => $request->issue_type,
+                    'problem_description' => $request->problem_description,
+                    'vendor' => $request->vendor,
+                    'vendor_phno' => $request->vendor_phno,
+                    'vendor_address' => $request->vendor_address,
+                    'cost' => $request->cost,
+                    'status' => $request->status,
+                    'remark' => $request->remark,
+                    'duration' => $request->duration,
+                    'payment' => $request->payment,
+                    'maintenance_date' => $request->maintenance_date
+                ]);
 
-          
+                if ($request->has('evidence_image') && $request->filled('image')) {
+                    $maintenance->addMediaFromBase64($request->image)
+                        ->toMediaCollection('evidences');
+                }
 
-            return $maintenance;
+                return $maintenance;
             });
 
-           
+            $image_url = $maintenance->getFirstMediaUrl('evidences') ?: null;
+            $preview_url = $maintenance->getFirstMediaUrl('evidences', 'preview') ?: null;
+
+            $maintenance->image_url = $image_url;
+            $maintenance->preview_url = $preview_url;
+
             $asset->update(['status' => 'maintenance']);
             return response()->json(['success' => true, 'data' => $maintenance], 201);
         } catch (Exception $e) {
@@ -97,6 +115,13 @@ class MaintenanceController extends Controller
             if (!$maintenance) {
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
+
+            $image_url = $maintenance->getFirstMediaUrl('evidences') ?: null;
+            $preview_url = $maintenance->getFirstMediaUrl('evidences', 'preview') ?: null;
+
+            $maintenance->image_url = $image_url;
+            $maintenance->preview_url = $preview_url;
+
             return response()->json(['success' => true, 'data' => $maintenance], 200);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -114,26 +139,42 @@ class MaintenanceController extends Controller
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
 
-            $updatemaintenance=$request->validate([
+            $request->validate([
                 'asset_id' => 'required|exists:assets,asset_id',
-                'employee_id'=>'required|exists:users,employee_id',
-                'category_id'=>'required|exists:categories,category_id',
-                'issue_type'=>'required|string',
-                'problem_description'=>'required|string',
+                'employee_id' => 'required|exists:users,employee_id',
+                'category_id' => 'required|exists:categories,category_id',
+                'issue_type' => 'required|string',
+                'problem_description' => 'required|string',
                 'vendor' => 'required|string',
                 'vendor_phno' => 'required|string',
                 'vendor_address' => 'required|string',
                 'cost' => 'required|integer',
-                'remark'=>'required',
-                'duration'=>'required|integer',
-                'payment'=>'required|integer',
-                'status'=>'required',
+                'remark' => 'required',
+                'duration' => 'required|integer',
+                'payment' => 'required|integer',
+                'status' => 'required',
                 'maintenance_date' => 'required|date',
             ]);
 
-            $maintenance->update($updatemaintenance);
+            if ($request->has('image') && $request->filled('image')) {
+                $maintenance->clearMediaCollection('images');
+                $maintenance->addMediaFromBase64($request->image)
+                    ->toMediaCollection('images');
+            }
 
-            return response()->json(['success' => true, 'data' => $maintenance], 200);
+            $maintenance->update($request->except('image'));
+
+            $image_url = $maintenance->getFirstMediaUrl('images') ?: null;
+            $preview_url = $maintenance->getFirstMediaUrl('images', 'preview') ?: null;
+
+            $maintenance->image_url = $image_url;
+            $maintenance->preview_url = $preview_url;
+
+            return response()->json([
+                'success' => true,
+                'data' => $maintenance,
+                'message' => 'Maintenance updated successfully'
+            ], 200);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -146,9 +187,9 @@ class MaintenanceController extends Controller
     public function destroy(string $id)
     {
         PermissionController::checkPermission('delete-maintenances');
-        try{
-            $maintenance=Maintenance::find($id);
-            if(!$maintenance){
+        try {
+            $maintenance = Maintenance::find($id);
+            if (!$maintenance) {
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
             Asset::where('asset_id', $maintenance->asset_id)->update(['status' => 'available']);
@@ -159,5 +200,5 @@ class MaintenanceController extends Controller
         }
     }
 
-   
-} 
+
+}

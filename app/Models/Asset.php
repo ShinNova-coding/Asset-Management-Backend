@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Image\Enums\Fit;
@@ -12,7 +13,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Asset extends Model implements HasMedia
 {
-    use LogsActivity,InteractsWithMedia;
+    use LogsActivity,InteractsWithMedia,SoftDeletes;
     protected $guarded=[];
 
     protected $primaryKey='asset_id';//primary key change
