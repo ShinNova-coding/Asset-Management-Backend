@@ -10,10 +10,11 @@ use Illuminate\Http\Request;
 
 class GetEmployeeAssignmentController extends Controller
 {
-    public function getEmployeeAsset(string $id){
+    public function getEmployeeAsset(Request $request){
         
         PermissionController::checkPermission('view-assignments');
         try{
+        $id = $request->user()->employee_id;
         $assignment=Assignment::with('asset.category','asset.media')
                             ->where('employee_id',$id)
                             ->where('status','active')

@@ -59,9 +59,10 @@ class CategoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request)
     {
         PermissionController::checkPermission('view-categories');
+        $id = $request->query('category_id');
          $category = Category::firstWhere('id', $id);
         $category = Category::firstWhere('id', $id);
 
@@ -74,7 +75,8 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $category
+            'data' => $category,
+            'message' => 'Category retrieved successfully'
         ], 200);
 
     }
@@ -82,10 +84,11 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request)
     {
         PermissionController::checkPermission('update-categories');
         try {
+            $id = $request->input('category_id');
             $category = Category::firstWhere('id', $id);
 
             if (!$category) {
@@ -118,10 +121,11 @@ class CategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request)
     {
         PermissionController::checkPermission('delete-categories'); 
         try {
+            $id = $request->input('category_id');
             $category = Category::firstWhere('id', $id);
 
             if (!$category) {

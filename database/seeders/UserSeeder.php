@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
@@ -19,9 +20,14 @@ class UserSeeder extends Seeder
             RoleSeeder::class
         ]);
         $superAdminRole = Role::create(['name' => 'super-admin','guard_name' => 'sanctum']);
-        $permissions = \Spatie\Permission\Models\Permission::all();
+
+        $permissions = Permission::all();
+
         $superAdminRole->givePermissionTo($permissions);
+        
        $user= User::create([
+
+            'id'=>fake()->uuid(),
             'employee_id' => 'EMP-001',
             'name' => 'System Admin',
             'email' => 'admin@gmail.com',

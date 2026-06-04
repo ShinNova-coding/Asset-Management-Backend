@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Auth;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -15,7 +16,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements HasMedia
 {
-    use Notifiable,HasApiTokens,HasRoles,InteractsWithMedia;
+    use Notifiable,HasApiTokens,HasRoles,InteractsWithMedia,HasUuids;
 
     /**
      * The attributes that are mass assignable.
@@ -34,10 +35,7 @@ class User extends Authenticatable implements HasMedia
         'remember_token',
     ];
 
-    protected $primaryKey = 'employee_id';
-    public $incrementing = false;
-    protected $keyType = 'string';
-
+   
     protected $guard_name = 'sanctum';
 
     /**
@@ -67,16 +65,11 @@ class User extends Authenticatable implements HasMedia
              ->singleFile();//delete old photos
     }
 
-   public function assetRequest(){
-return $this->hasMany(AssetRequest::class);
-   }
+   
 
    public function assignment(){
     return $this->hasMany(Assignment::class);
    }
    
-   public function getKeyName()
-{
-    return 'employee_id';
-}
+ 
 }

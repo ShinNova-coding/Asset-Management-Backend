@@ -10,9 +10,10 @@ use Illuminate\Http\Request;
 class AssignmentHistoryController extends Controller
 {
     public function assignmentHistory(Request $request){
-        PermissionController::checkPermission('view-asssignments');
+        PermissionController::checkPermission('view-assignments');
 
-        $assignment=Assignment::with('asset')->latest()->get();
+        $user = $request->user()->employee_id;
+        $assignment=Assignment::with('asset')->where('employee_id', $user)->latest()->get();
 
         if($assignment->isEmpty()){
             return response()->json([

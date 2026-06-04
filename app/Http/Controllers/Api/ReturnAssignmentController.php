@@ -11,10 +11,11 @@ use Illuminate\Http\Request;
 
 class ReturnAssignmentController extends Controller
 {
-         public static function returnAssignment($id)
+         public static function returnAssignment(Request $request)
     {
         PermissionController::checkPermission('update-assignments');
         try {
+            $id = $request->input('asset_id');
             $assignment = Assignment::where('asset_id', $id)->where('status', 'active')->first();      
            
             if (!$assignment) {

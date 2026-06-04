@@ -66,7 +66,6 @@ class RoleController extends Controller
     {
         PermissionController::checkPermission('view-roles');
         try{
-         /** @var \Spatie\Permission\Models\Role|null $role */
         $role = Role::find($id);
         if (! $role) {
             return response()->json([
@@ -90,16 +89,10 @@ class RoleController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    
-
-
-
-
     public function update(Request $request, string $id)
     {
         PermissionController::checkPermission('update-roles');
         try {
-            /** @var \Spatie\Permission\Models\Role|null $role */
             $role = Role::find($id);
 
             if (!$role) {
@@ -111,11 +104,14 @@ class RoleController extends Controller
 
             $request->validate([
                 'name' => 'required|unique:roles,name,' . $role->id,
+                'permissions' => 'required|array'
             ]);
 
             $role->update([
                 'name' => $request->name,
             ]);
+
+            $role->syncPermissions($request->permissions);
 
             return response()->json([
                 'status' => 'success',
@@ -136,7 +132,6 @@ class RoleController extends Controller
     {
         PermissionController::checkPermission('delete-roles');
         try {
-            /** @var \Spatie\Permission\Models\Role|null $role */
             $role = Role::find($id);
 
             if (!$role) {

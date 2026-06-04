@@ -31,7 +31,6 @@ class UserController extends Controller
         }
         
          foreach ($users as $user) {
-            /** @var \App\Models\User $user */
             $user->image_url = $user->getFirstMediaUrl('images') ?: null;
             $user->preview_url = $user->getFirstMediaUrl('images', 'preview') ?: null;
         }
@@ -55,11 +54,13 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'joined_date' => 'required|date',
-                'position' => 'nullable|string|max:255',
-                'phone_number' => 'nullable|string|max:20',
+                'position' => 'required|string|max:255',
+                'phone_number' => 'required|string|max:20',
                 'password' => 'required|min:8|confirmed',
                 'role' => 'required',
-                'image' => 'required|string'
+                'image' => 'required|string',
+                'left_date' => 'nullable|date|after_or_equal:joined_date',
+                'status' => 'required|in:active,suspended,resigned',
             ]);
 
             $user = DB::transaction(function () use ($request) {
@@ -72,7 +73,8 @@ class UserController extends Controller
                     'position' => $request->position,
                     'phone_number' => $request->phone_number,
                     'password' => Hash::make($request->password),
-                    'status' => 'active',
+                    'status' => $request->status,
+                    'left_date' => $request->left_date,
                 ]);
 
                 $user->assignRole($request->role);
@@ -107,9 +109,12 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request)
     {
         PermissionController::checkPermission('view-users');
+
+        $id = $request->query('employee_id');
+
         $showuser = User::firstWhere('employee_id', $id);
         if (!$showuser) {
 
@@ -137,10 +142,11 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request)
     {
         PermissionController::checkPermission('update-users');
         try {
+            $id = $request->input('employee_id');
             $user = User::firstWhere('employee_id', $id);
             $request->validate([
                 'name' => 'required|string|max:255',
@@ -154,11 +160,11 @@ class UserController extends Controller
             ]);
 
             if($request->status ==='suspended'){
-                UserSuspendResignController::suspended($user->employee_id);
+                UserSuspendResignController::updateStatus($request);
             }
 
             if($request->status ==='resigned'){
-                UserSuspendResignController::resigned($user->employee_id);
+                UserSuspendResignController::updateStatus($request);
             }
 
             $data = $request->except('password', 'role', 'image');
@@ -195,10 +201,11 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request)
     {
         PermissionController::checkPermission('delete-users');
         try {
+            $id = $request->input('employee_id');
             $user = User::firstWhere('employee_id', $id);
 
             if (!$user) {

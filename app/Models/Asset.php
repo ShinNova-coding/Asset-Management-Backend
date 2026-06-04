@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -13,17 +14,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Asset extends Model implements HasMedia
 {
-    use LogsActivity,InteractsWithMedia,SoftDeletes;
+    use LogsActivity,InteractsWithMedia,SoftDeletes,HasUuids;
     protected $guarded=[];
 
-    protected $primaryKey='asset_id';//primary key change
-
-    public $incrementing=false;//no auto-inc
-
-    protected $keyType='string';
-
+   
     public function user(){
-        return $this->belongsToMany(User::class,'assignments','employee_id','asset_id');
+        return $this->belongsToMany(User::class,'assignments');
     }
 
     public function category(){

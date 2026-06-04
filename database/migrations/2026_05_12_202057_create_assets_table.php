@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('assets', function (Blueprint $table) {
-            $table->string('asset_id')->primary();
+            $table->uuid('id')->primary();
+            $table->string('asset_code')->unique();
             $table->string('name');
             $table->string('serial_number')->unique();
             $table->date('purchased_date');
@@ -20,7 +21,7 @@ return new class extends Migration
             $table->string('model');
             $table->string('ram_capacity');
             $table->string('storage');
-            $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
+            $table->foreignUuid('category_id')->constrained('categories')->cascadeOnDelete();
             $table->string('status')->default('available');
             $table->string('condition')->default('fair');
             $table->timestamps();

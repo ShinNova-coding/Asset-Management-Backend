@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Sanctum\HasApiTokens;
 
 class Assignment extends Model
 {
-    use HasFactory;
+    use HasFactory,HasUuids;
 
     protected $table = 'assignments';
 
@@ -15,12 +17,12 @@ class Assignment extends Model
 
     public function asset()
     {
-        return $this->belongsTo(Asset::class, 'asset_id', 'asset_id');
+        return $this->belongsTo(Asset::class);
     }
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(User::class);
     }
     
 }

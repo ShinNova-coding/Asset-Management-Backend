@@ -19,18 +19,19 @@ class AssignmentController extends Controller
         $assignments = Assignment::with(['asset'])
                                   ->where('status','active')
                                   ->latest()->get();
-                                  
-        return response()->json([
-            'success' => true,
-            'data' => $assignments,
-            'message' => 'Assignments retrieved successfully'
-        ], 200);
+                 
         if ($assignments->isEmpty()) {
             return response()->json([
                 'success' => false, 
                 'message' => 'No assignments found'
                 ], 404);
         }
+        return response()->json([
+            'success' => true,
+            'data' => $assignments,
+            'message' => 'Assignments retrieved successfully'
+        ], 200);
+        
 
         }
 
@@ -41,7 +42,7 @@ class AssignmentController extends Controller
             $request->validate([
                 'asset_id' => 'required|exists:assets,asset_id',
                 'employee_id' => 'required|exists:users,employee_id',
-                'assign_date' => 'required|date',
+                'assigned_date' => 'required|date',
             ]);
 
             $asset = Asset::where('asset_id', $request->asset_id)->first();
@@ -52,7 +53,7 @@ class AssignmentController extends Controller
             $assignment = Assignment::create([
                 'asset_id' => $request->asset_id,
                 'employee_id' => $request->employee_id,
-                'assign_date' => $request->assign_date,
+                'assigned_date' => $request->assigned_date,
                 'status' => 'active'
             ]);
 
@@ -83,7 +84,7 @@ class AssignmentController extends Controller
         PermissionController::checkPermission('update-assignments');
         try {
             $assignment = Assignment::find($id);
-            if (!$assignment) {
+            if ($assignment->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Assignment not found'
@@ -92,9 +93,9 @@ class AssignmentController extends Controller
             $request->validate([
                 'employee_id' => 'exists:users,employee_id',
                 'asset_id' => 'exists:assets,asset_id',
-                'assign_date' => 'date'
+                'assigned_date' => 'date'
             ]);
-            $assignment->update($request->only(['employee_id', 'asset_id', 'assign_date']));
+            $assignment->update($request->only(['employee_id', 'asset_id', 'assigned_date']));
             return response()->json([
                 'success' => true,
                 'data' => $assignment,

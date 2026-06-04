@@ -8,20 +8,23 @@ use Illuminate\Http\Request;
 
 class CategoryAssetController extends Controller
 {
-    public function categoryAsset(string $id){
-        $assets=Asset::where('category_id',$id)->latest()->get();
-        if($assets->isEmpty()){
+    public function categoryAsset(Request $request)
+    {
+        $categoryId = $request->input('category_id');
+
+        $assets = Asset::where('category_id', $categoryId)->latest()->get();
+        if ($assets->isEmpty()) {
             return response()->json([
-            'success'=>false,
-            'message'=>'There is no asset related to this category'
+                'success' => false,
+                'message' => 'There is no asset related to this category'
             ]);
-            
+
         }
         return response()->json([
-                'success'=>true,
-                'data'=>$assets,
-                'message'=>'Assets related to categories are retrieved successfully'
-            ]);
+            'success' => true,
+            'data' => $assets,
+            'message' => 'Assets related to categories are retrieved successfully'
+        ]);
 
 
     }

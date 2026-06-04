@@ -31,7 +31,6 @@ class AssetController extends Controller
             }
 
         foreach ($assets as $asset) {
-            /** @var \App\Models\Asset $asset */
             $asset->image_url = $asset->getFirstMediaUrl('images') ?: null;
             $asset->preview_url = $asset->getFirstMediaUrl('images', 'preview') ?: null;
         }
@@ -115,11 +114,12 @@ class AssetController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request)
     {
         PermissionController::checkPermission('view-assets');
         try {
 
+            $id = $request->query('asset_id');
             $asset = Asset::with('category')->firstWhere('asset_id', $id);
 
             if (!$asset) {
@@ -151,10 +151,11 @@ class AssetController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request)
     {
         PermissionController::checkPermission('update-assets');
         try {
+            $id = $request->input('asset_id');
             $asset = Asset::firstWhere('asset_id', $id);
 
             if (!$asset) {
@@ -209,10 +210,11 @@ class AssetController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request)
     {
         PermissionController::checkPermission('delete-assets');     
         try {
+            $id = $request->input('asset_id');
             $asset = Asset::firstWhere('asset_id', $id);
 
             if (!$asset) {
@@ -255,9 +257,10 @@ class AssetController extends Controller
     }
 }
 
-    public function restore(string $id){
+    public function restore(Request $request){
         PermissionController::checkPermission('update-assets');
         try{
+            $id = $request->input('asset_id');
             $asset=Asset::onlyTrashed()->firstWhere('asset_id',$id);
             if(!$asset){
                 return response()->json([
