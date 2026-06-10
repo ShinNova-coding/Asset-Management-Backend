@@ -60,7 +60,7 @@ class MaintenanceRequestController extends Controller
                         return $m;
                     });
                     
-                    return response()->json(['success' => true, 'data' => $maintenance, 'message' => 'Request sent successfully'], 201);
+                return response()->json(['success' => true, 'data' => $maintenance, 'message' => 'Request sent successfully'], 201);
 
                 case 'approved':
                 case 'maintenance':
