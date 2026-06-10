@@ -12,12 +12,13 @@ class AssignmentHistoryController extends Controller
     public function assignmentHistory(Request $request){
         PermissionController::checkPermission('view-assignments');
 
-        $user = $request->user()->employee_id;
-        $assignment=Assignment::with('asset')->where('employee_id', $user)->latest()->get();
+        $user = $request->user()->id;
+        $assignment=Assignment::with('asset')->where('users_id', $user)->latest()->get();
 
         if($assignment->isEmpty()){
             return response()->json([
                 'success'=>false,
+                'data'=>$user,
                 'message'=>'No assignment found'
             ],404);
         }

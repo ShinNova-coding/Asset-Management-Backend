@@ -56,7 +56,7 @@ class AssetController extends Controller
 
         try {
             $request->validate([
-                'asset_id' => 'required|string|unique:assets,asset_id',
+                'asset_code' => 'required|string|unique:assets,asset_code',
                 'name' => 'required|string|max:255',
                 'serial_number' => 'required|string|unique:assets,serial_number',
                 'purchased_date' => 'required|date',
@@ -72,7 +72,7 @@ class AssetController extends Controller
 
             $asset=DB::transaction(function () use ($request) {
             $asset = Asset::create([
-                'asset_id' => $request->asset_id,
+                'asset_code' => $request->asset_code,
                 'name' => $request->name,
                 'serial_number' => $request->serial_number,
                 'purchased_date' => $request->purchased_date,
@@ -119,8 +119,8 @@ class AssetController extends Controller
         PermissionController::checkPermission('view-assets');
         try {
 
-            $id = $request->query('asset_id');
-            $asset = Asset::with('category')->firstWhere('asset_id', $id);
+            $id = $request->input('id');
+            $asset = Asset::with('category')->firstWhere('id', $id);
 
             if (!$asset) {
                 return response()->json([
@@ -155,8 +155,8 @@ class AssetController extends Controller
     {
         PermissionController::checkPermission('update-assets');
         try {
-            $id = $request->input('asset_id');
-            $asset = Asset::firstWhere('asset_id', $id);
+            $id = $request->input('id');
+            $asset = Asset::firstWhere('id', $id);
 
             if (!$asset) {
                 return response()->json([
@@ -167,7 +167,7 @@ class AssetController extends Controller
 
             $request->validate([
                 'name' => 'required|string|max:255',
-                'serial_number' => 'required|unique:assets,serial_number,' . $id . ',asset_id',
+                'serial_number' => 'required|unique:assets,serial_number,' . $id . ',id',
                 'purchased_date' => 'required|date',
                 'warranty_period' => 'required|integer',
                 'category_id' => 'required|exists:categories,id',
@@ -214,8 +214,8 @@ class AssetController extends Controller
     {
         PermissionController::checkPermission('delete-assets');     
         try {
-            $id = $request->input('asset_id');
-            $asset = Asset::firstWhere('asset_id', $id);
+            $id = $request->input('id');
+            $asset = Asset::firstWhere('id', $id);
 
             if (!$asset) {
                 return response()->json([
@@ -260,8 +260,8 @@ class AssetController extends Controller
     public function restore(Request $request){
         PermissionController::checkPermission('update-assets');
         try{
-            $id = $request->input('asset_id');
-            $asset=Asset::onlyTrashed()->firstWhere('asset_id',$id);
+            $id = $request->input('id');
+            $asset=Asset::onlyTrashed()->firstWhere('id',$id);
             if(!$asset){
                 return response()->json([
                     'success'=>false,

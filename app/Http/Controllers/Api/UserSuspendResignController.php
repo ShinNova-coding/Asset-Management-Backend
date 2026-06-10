@@ -17,7 +17,7 @@ class UserSuspendResignController extends Controller
         PermissionController::checkPermission('update-users');
         $id = $request->input('id');
         $status = $request->input('status');
-        $user = User::where('employee_id', $id)->first();
+        $user = User::where('id', $id)->first();
 
         if (!$user) {
             return response()->json([
@@ -27,7 +27,7 @@ class UserSuspendResignController extends Controller
         }
         $user->update(['status' => $status]);
 
-        $assignments = Assignment::where('employee_id', $id)
+        $assignments = Assignment::where('users_id', $id)
             ->where('status', 'active')
             ->get();
 
@@ -35,7 +35,7 @@ class UserSuspendResignController extends Controller
             $assignment->update(['status' => 'returned']);
         }
 
-        $assets = Asset::whereIn('id', $assignments->pluck('asset_id'))->get();
+        $assets = Asset::whereIn('id', $assignments->pluck('assets_id'))->get();
 
         foreach ($assets as $asset) {
             $asset->update(['status' => 'available']);

@@ -16,7 +16,7 @@ class ReturnAssignmentController extends Controller
         PermissionController::checkPermission('update-assignments');
         try {
             $id = $request->input('asset_id');
-            $assignment = Assignment::where('asset_id', $id)->where('status', 'active')->first();      
+            $assignment = Assignment::where('id', $id)->where('status', 'active')->first();      
            
             if (!$assignment) {
                 return response()->json([
@@ -25,17 +25,14 @@ class ReturnAssignmentController extends Controller
                 ], 404);
             }
 
-            $assetrequest=AssetRequest::where('asset_id',$id);
-            $assetrequest->update([
-                'status'=>'returned'
-            ]);
+            
 
             $assignment->update([
                 'status' => 'returned',
                 'returned_date' => now()
             ]);
 
-            Asset::where('asset_id', $assignment->asset_id)->update(['status' => 'available']);
+            Asset::where('id', $assignment->assets_id)->update(['status' => 'available']);
 
             return response()->json([
                 'success' => true,

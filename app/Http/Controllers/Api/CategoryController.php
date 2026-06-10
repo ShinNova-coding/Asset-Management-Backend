@@ -62,7 +62,7 @@ class CategoryController extends Controller
     public function show(Request $request)
     {
         PermissionController::checkPermission('view-categories');
-        $id = $request->query('category_id');
+        $id = $request->input('category_id');
          $category = Category::firstWhere('id', $id);
         $category = Category::firstWhere('id', $id);
 

@@ -14,9 +14,9 @@ class GetEmployeeAssignmentController extends Controller
         
         PermissionController::checkPermission('view-assignments');
         try{
-        $id = $request->user()->employee_id;
+        $id = $request->user()->id;
         $assignment=Assignment::with('asset.category','asset.media')
-                            ->where('employee_id',$id)
+                            ->where('users_id',$id)
                             ->where('status','active')
                             ->get()
                             ->pluck('asset')
@@ -28,10 +28,15 @@ class GetEmployeeAssignmentController extends Controller
                                 }
                                 return $asset;
                             });
-                            
+                if($assignment->isEmpty()){
+                            return response()->json([
+                                'success'=>false,
+                                'message'=>'No active assignments found for the employee'
+                            ],404);
+                        }
 
         return response()->json([
-            'success'=>false,
+            'success'=>true,
             'data'=>$assignment,
             'Message'=>'Asset retrieved according to employee assign'
         ]);

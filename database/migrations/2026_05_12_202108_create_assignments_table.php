@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('assignments', function (Blueprint $table) {
-            $table->uuid()->primary();
-            $table->foreignUuid('employee_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignUuid('asset_id')->constrained('assets')->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('users_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignUuid('assets_id')->constrained('assets')->cascadeOnDelete();
             $table->string('note')->nullable();
             $table->string('status')->default('available');
             $table->date('assigned_date');

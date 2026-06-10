@@ -23,7 +23,6 @@ class MaintenanceController extends Controller
             return response()->json(['success' => false, 'message' => 'No maintenances found'], 404);
         }
         foreach ($maintenances as $maintenance) {
-            /** @var \App\Models\Maintenance $maintenance */
 
             $image_url = $maintenance->getFirstMediaUrl('evidences') ?: null;
             $preview_url = $maintenance->getFirstMediaUrl('evidences', 'preview') ?: null;
@@ -42,9 +41,9 @@ class MaintenanceController extends Controller
         PermissionController::checkPermission('create-maintenances');
         try {
             $request->validate([
-                'asset_id' => 'required|exists:assets,asset_id',
-                'employee_id' => 'required|exists:users,employee_id',
-                'category_id' => 'required|exists:categories,category_id',
+                'assets_id' => 'required|exists:assets,id',
+                'users_id' => 'required|exists:users,id',
+                'categories_id' => 'required|exists:categories,id',
                 'issue_type' => 'required|string',
                 'problem_description' => 'required|string',
                 'vendor' => 'required|string',
@@ -53,22 +52,22 @@ class MaintenanceController extends Controller
                 'cost' => 'required|integer',
                 'remark' => 'required',
                 'duration' => 'required|integer',
-                'payment' => 'required|integer',
+                'payment' => 'required',
                 'maintenance_date' => 'required|date',
                 'status' => 'required',
                 'evidence_image' => 'required'
             ]);
 
 
-            $asset = Asset::where('asset_id', $request->asset_id)->first();
+            $asset = Asset::where('id', $request->assets_id)->first();
             if ($asset->status !== 'available') {
                 return response()->json(['success' => false, 'message' => 'Asset not available for maintenance'], 400);
             }
             $maintenance = DB::transaction(function () use ($request) {
                 $maintenance = Maintenance::create([
-                    'asset_id' => $request->asset_id,
-                    'employee_id' => $request->employee_id,
-                    'category_id' => $request->category_id,
+                    'assets_id' => $request->assets_id,
+                    'users_id' => $request->users_id,
+                    'categories_id' => $request->categories_id,
                     'issue_type' => $request->issue_type,
                     'problem_description' => $request->problem_description,
                     'vendor' => $request->vendor,
@@ -106,10 +105,11 @@ class MaintenanceController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($id)
+    public function show(Request $request)
     {
         PermissionController::checkPermission('view-maintenances');
         try {
+            $id = $request->input('maintenance_id');
             $maintenance = Maintenance::with('asset')->find($id);
 
             if (!$maintenance) {
@@ -131,18 +131,20 @@ class MaintenanceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request)
     {
+        PermissionController::checkPermission('update-maintenances');
         try {
+            $id = $request->input('maintenance_id');
             $maintenance = Maintenance::find($id);
             if (!$maintenance) {
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
 
             $request->validate([
-                'asset_id' => 'required|exists:assets,asset_id',
-                'employee_id' => 'required|exists:users,employee_id',
-                'category_id' => 'required|exists:categories,category_id',
+                'assets_id' => 'required|exists:assets,id',
+                'users_id' => 'required|exists:users,id',
+                'categories_id' => 'required|exists:categories,id',
                 'issue_type' => 'required|string',
                 'problem_description' => 'required|string',
                 'vendor' => 'required|string',
@@ -154,15 +156,16 @@ class MaintenanceController extends Controller
                 'payment' => 'required|integer',
                 'status' => 'required',
                 'maintenance_date' => 'required|date',
+                'evidence_image' => 'nullable|string'
             ]);
 
-            if ($request->has('image') && $request->filled('image')) {
+            if ($request->has('evidence_image') && $request->filled('evidence_image')) {
                 $maintenance->clearMediaCollection('images');
-                $maintenance->addMediaFromBase64($request->image)
-                    ->toMediaCollection('images');
+                $maintenance->addMediaFromBase64($request->evidence_image)
+                    ->toMediaCollection('evidences');
             }
 
-            $maintenance->update($request->except('image'));
+            $maintenance->update($request->except('evidence_image','maintenance_id'));
 
             $image_url = $maintenance->getFirstMediaUrl('images') ?: null;
             $preview_url = $maintenance->getFirstMediaUrl('images', 'preview') ?: null;
@@ -184,15 +187,16 @@ class MaintenanceController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request)
     {
         PermissionController::checkPermission('delete-maintenances');
         try {
+            $id = $request->input('maintenance_id');
             $maintenance = Maintenance::find($id);
             if (!$maintenance) {
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
-            Asset::where('asset_id', $maintenance->asset_id)->update(['status' => 'available']);
+            Asset::where('id', $maintenance->assets_id)->update(['status' => 'available']);
             $maintenance->delete();
             return response()->json(['success' => true, 'message' => 'Maintenance record deleted successfully'], 200);
         } catch (Exception $e) {

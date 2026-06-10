@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\AssignmentRequestController;
 use App\Http\Controllers\Api\ChangePasswordController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\GetEmployeeAssignmentController;
+use App\Http\Controllers\Api\GetEmployeeMaintenanceController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\MaintenanceActivitylogsController;
 use App\Http\Controllers\Api\MaintenanceController;
@@ -27,7 +28,7 @@ use App\Http\Controllers\Api\ReturnAssignmentController;
 use Illuminate\Support\Facades\Route;
 
 //Login routes
-Route::post('/login', [LoginController::class, 'login'])->name('login');
+Route::post('/login', [LoginController::class, 'login'])->name('login')->middleware('throttle:login');
 
 Route::post('/forgot-password', [PasswordResetController::class, 'submitForgetPasswordForm'])->name('password.email');
 Route::post('/reset-password', [PasswordResetController::class, 'submitResetPasswordForm'])->name('password.update');
@@ -47,10 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/assignment/return', [ReturnAssignmentController::class, 'returnAssignment'])->name('assignment.return');
     Route::resource('assignment', AssignmentController::class);
 
-    Route::post('/maintenance/status', [MaintenanceRequestController::class, 'updateStatus'])->name('maintenance.request');
-    Route::post('/admin/maintenance/status', [MaintenanceRequestController::class, 'updateStatus'])->name('maintenance.status');
-    Route::resource('maintenance', MaintenanceController::class);
-
+   
     Route::get('/report/user', [ReportController::class, 'userReport'])->name('report.user');
     Route::get('/report/asset', [ReportController::class, 'assetReport'])->name('report.asset');
     Route::get('/report/category', [ReportController::class, 'categoryReport'])->name('report.category');
@@ -58,15 +56,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboardview'])->name('dashboard');
 
     Route::post('/admin/users/status', [UserSuspendResignController::class, 'updateStatus']);
-
     Route::resource('user', UserController::class);
     Route::get('/profile', [ProfileController::class, 'viewProfile']);
     Route::post('/profile/edit', [ProfileController::class, 'editProfile']);
 
     Route::resource('role', RoleController::class);
-    Route::get('/category/assets', [CategoryAssetController::class, 'categoryAsset']);
 
+    Route::get('/category/assets', [CategoryAssetController::class, 'categoryAsset']);
     Route::resource('category', CategoryController::class);
+
+    Route::get('/maintenance/asset',[GetEmployeeMaintenanceController::class, 'getEmployeeMaintenance'])->name('maintenance.getEmployeeMaintenance');
+    Route::post('/maintenance/status', [MaintenanceRequestController::class, 'updateStatus'])->name('maintenance.request');
+    Route::post('/admin/maintenance/status', [MaintenanceRequestController::class, 'updateStatus'])->name('maintenance.status');
+    Route::resource('maintenance', MaintenanceController::class);
 
     Route::get('/activitylogs', [ActivitylogsController::class, 'activitylogs']);
     Route::get('/assignmentlogs', [AssignmentActivitylogsController::class, 'assignmentActivitylogs']);

@@ -30,13 +30,19 @@ class Asset extends Model implements HasMedia
         return $this->hasMany(Maintenance::class);
     }
 
-    public function getActivitylogOptions():LogOptions
-    {
-        return LogOptions::defaults()
-            ->logOnly(['name', 'employee_id','status'])
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
-    }
+public function getActivitylogOptions(): LogOptions
+{
+    return LogOptions::defaults()
+        ->logOnly(['name', 'employee_id', 'status'])
+        ->logOnlyDirty()
+        ->dontSubmitEmptyLogs()
+        ->setDescriptionForEvent(function(string $eventName) {
+            if ($eventName === 'updated' && $this->wasChanged('status')) {
+                return "Status changed to {$this->status}";
+            }
+            return "Asset {$eventName}";
+        });
+}
 
     public function registerMediaConversions(?Media $media=null):void
     {

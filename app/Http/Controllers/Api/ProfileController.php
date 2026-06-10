@@ -10,9 +10,8 @@ class ProfileController extends Controller
 
     public function viewProfile(Request $request){
 
-
     $user=$request->user();
-
+    $user->load('roles');
        $image_url = $user->getFirstMediaUrl('images') ?: null;
             $preview_url = $user->getFirstMediaUrl('images', 'preview') ?: null;
 

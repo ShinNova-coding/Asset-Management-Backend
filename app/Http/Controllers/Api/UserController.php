@@ -113,9 +113,9 @@ class UserController extends Controller
     {
         PermissionController::checkPermission('view-users');
 
-        $id = $request->query('employee_id');
+        $id = $request->input('id');
 
-        $showuser = User::firstWhere('employee_id', $id);
+        $showuser = User::firstWhere('id', $id);
         if (!$showuser) {
 
             return response()->json([
@@ -146,11 +146,11 @@ class UserController extends Controller
     {
         PermissionController::checkPermission('update-users');
         try {
-            $id = $request->input('employee_id');
-            $user = User::firstWhere('employee_id', $id);
+            $id = $request->input('id');
+            $user = User::firstWhere('id', $id);
             $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email,' . $user->employee_id . ',employee_id',
+                'email' => 'required|email|unique:users,email,' . $user->id . ',id',
                 'joined_date' => 'required|date',
                 'position' => 'nullable|string|max:255',
                 'phone_number' => 'nullable|string|max:20',
@@ -205,8 +205,8 @@ class UserController extends Controller
     {
         PermissionController::checkPermission('delete-users');
         try {
-            $id = $request->input('employee_id');
-            $user = User::firstWhere('employee_id', $id);
+            $id = $request->input('id');
+            $user = User::firstWhere('id', $id);
 
             if (!$user) {
                 return response()->json([

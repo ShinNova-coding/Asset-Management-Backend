@@ -13,10 +13,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('maintenances', function (Blueprint $table) {
-            $table->uuid()->primary();
-            $table->foreignUuid('asset_id')->constrained('assets')->cascadeOnDelete();
-            $table->foreignUuid('employee_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignUuid('category_id')->constrained('categories')->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('assets_id')->constrained('assets')->cascadeOnDelete();
+            $table->foreignUuid('users_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignUuid('categories_id')->constrained('categories')->cascadeOnDelete();
             $table->string('issue_type');
             $table->text('problem_description');
             $table->string('vendor')->nullable();

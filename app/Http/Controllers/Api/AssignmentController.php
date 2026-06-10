@@ -13,6 +13,7 @@ use Exception;
 
 class AssignmentController extends Controller
 {
+   
     public function index()
     {
         PermissionController::checkPermission('view-assignments');
@@ -40,19 +41,19 @@ class AssignmentController extends Controller
         PermissionController::checkPermission('create-assignments');
         try {
             $request->validate([
-                'asset_id' => 'required|exists:assets,asset_id',
-                'employee_id' => 'required|exists:users,employee_id',
+                'assets_id' => 'required|exists:assets,id',
+                'users_id' => 'required|exists:users,id',
                 'assigned_date' => 'required|date',
             ]);
 
-            $asset = Asset::where('asset_id', $request->asset_id)->first();
+            $asset = Asset::where('id', $request->assets_id)->first();
             if ($asset->status !== 'available') {
                 return response()->json(['success' => false, 'message' => 'Asset not available'], 400);
             }
 
             $assignment = Assignment::create([
-                'asset_id' => $request->asset_id,
-                'employee_id' => $request->employee_id,
+                'assets_id' => $request->assets_id,
+                'users_id' => $request->users_id,
                 'assigned_date' => $request->assigned_date,
                 'status' => 'active'
             ]);
@@ -65,10 +66,11 @@ class AssignmentController extends Controller
         }
     }
 
-    public function show($id)
+    public function show(Request $request, )
     {
         PermissionController::checkPermission('view-assignments');
         try {
+            $id = $request->input('assignment_id');
             $assignment = Assignment::with(['asset', 'user'])->find($id);
             if (!$assignment) {
                 return response()->json(['success' => false, 'message' => 'Assignment not found'], 404);
@@ -79,23 +81,24 @@ class AssignmentController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
         PermissionController::checkPermission('update-assignments');
         try {
+            $id = $request->input('assignment_id');
             $assignment = Assignment::find($id);
-            if ($assignment->isEmpty()) {
+            if (!$assignment) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Assignment not found'
                 ], 404);
             }
             $request->validate([
-                'employee_id' => 'exists:users,employee_id',
-                'asset_id' => 'exists:assets,asset_id',
+                'users_id' => 'exists:users,id',
+                'assets_id' => 'exists:assets,id',
                 'assigned_date' => 'date'
             ]);
-            $assignment->update($request->only(['employee_id', 'asset_id', 'assigned_date']));
+            $assignment->update($request->only(['users_id', 'assets_id', 'assigned_date']));
             return response()->json([
                 'success' => true,
                 'data' => $assignment,
@@ -110,10 +113,11 @@ class AssignmentController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request)
     {
         PermissionController::checkPermission('delete-assignments');
         try {
+            $id = $request->input('assignment_id');
             $assignment = Assignment::findOrFail($id);
 
             if ($assignment->status === 'active') {
@@ -122,7 +126,7 @@ class AssignmentController extends Controller
                     'message' => 'Cannot delete active assignment. Please release the asset first.'
                 ], 400);
             }
-            Asset::where('asset_id', $assignment->asset_id)->update(['status' => 'available']);
+            Asset::where('id', $assignment->assets_id)->update(['status' => 'available']);
             $assignment->delete();
             return response()->json(['success' => true, 'message' => 'Deleted and Asset released']);
         } catch (Exception $e) {

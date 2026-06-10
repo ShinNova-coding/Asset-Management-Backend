@@ -17,7 +17,7 @@ class RoleController extends Controller
     public function index()
     {
         PermissionController::checkPermission('view-roles');
-        $roles= Role::with('permissions')->get();
+        $roles= Role::with('permissions')->where('name', '!=', 'super-admin')->get();
         if(!$roles){
             return response()->json([
                 'status' => 'error',
@@ -62,14 +62,16 @@ class RoleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request)
     {
         PermissionController::checkPermission('view-roles');
         try{
-        $role = Role::find($id);
+        $id = $request->input('role_id');
+        $role = Role::where('id', $id)->with('permissions')->first();
         if (! $role) {
             return response()->json([
                 'status' => 'error',
+                'data'=>$id,
                 'message' => 'Role not found'
             ], 404);
         }
@@ -89,15 +91,18 @@ class RoleController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request)
     {
         PermissionController::checkPermission('update-roles');
         try {
-            $role = Role::find($id);
+            $id = $request->input('role_id');
+
+            $role = Role::where('id', $id)->first();
 
             if (!$role) {
                 return response()->json([
-                    'status' => 'error',
+                    'success' => 'error',
+                    'data' => $id,
                     'message' => 'Role not found'
                 ], 404);
             }
@@ -128,10 +133,11 @@ class RoleController extends Controller
         }
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request)
     {
         PermissionController::checkPermission('delete-roles');
         try {
+            $id = $request->input('role_id');
             $role = Role::find($id);
 
             if (!$role) {

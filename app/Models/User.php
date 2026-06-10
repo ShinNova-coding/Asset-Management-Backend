@@ -35,7 +35,8 @@ class User extends Authenticatable implements HasMedia
         'remember_token',
     ];
 
-   
+    public $incrementing = false;
+    protected $keyType = 'string';
     protected $guard_name = 'sanctum';
 
     /**
