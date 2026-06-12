@@ -18,6 +18,7 @@ class GetEmployeeAssignmentController extends Controller
         $assignment=Assignment::with('asset.category','asset.media')
                             ->where('users_id',$id)
                             ->where('status','active')
+                            ->whereHas('asset')
                             ->get()
                             ->pluck('asset')
                             ->map(function($asset){
@@ -28,7 +29,9 @@ class GetEmployeeAssignmentController extends Controller
                                 }
                                 return $asset;
                             });
-                if($assignment->isEmpty()){
+
+
+    if($assignment->isEmpty()){
                             return response()->json([
                                 'success'=>false,
                                 'message'=>'No active assignments found for the employee'

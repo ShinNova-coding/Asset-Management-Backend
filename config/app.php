@@ -65,8 +65,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
-
+    'timezone' => 'Asia/Yangon',
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

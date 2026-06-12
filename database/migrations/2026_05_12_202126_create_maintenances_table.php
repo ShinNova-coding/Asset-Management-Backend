@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('remark')->nullable();
             $table->integer('duration')->nullable();
             $table->string('payment')->nullable();
-            $table->string('status')->default('pending');
+            $table->string('status')->default('requested');
             $table->date('maintenance_date')->nullable();
             $table->date('completed_date')->nullable();
             $table->timestamps();

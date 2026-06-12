@@ -19,10 +19,14 @@ class PasswordResetController extends Controller
         );
 
         if ($status == Password::RESET_LINK_SENT) {
-            return response()->json(['message' => 'Password reset link sent to your email.']);
+            return response()->json([
+            'success' => true,  
+            'message' => 'Password reset link sent to your email.']);
         }
 
-        return response()->json(['message' => 'Failed to send password reset link.'], 500);
+        return response()->json([
+        'success' => false,  
+        'message' => 'Failed to send password reset link.'], 500);
     }
     
     public function submitResetPasswordForm(Request $request)
@@ -31,7 +35,7 @@ class PasswordResetController extends Controller
             'email' => 'required|email|exists:users,email',
             'password' => 'required|string|min:8|confirmed',
             'token' => 'required'
-        ]);
+        ]); 
 
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
@@ -43,9 +47,13 @@ class PasswordResetController extends Controller
         );
 
         if ($status == Password::PASSWORD_RESET) {
-            return response()->json(['message' => 'Password has been reset successfully.']);
+            return response()->json([
+                'success' => true,
+            'message' => 'Password has been reset successfully.']);
         }
 
-        return response()->json(['message' => 'Failed to reset password.'], 500);
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to reset password.'], 500);
     }
 }

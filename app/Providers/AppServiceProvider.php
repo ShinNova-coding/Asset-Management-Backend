@@ -26,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
     {
         RateLimiter::for('login', function (Request $request) {
         return Limit::perMinute(5)->by($request->ip());
-    });
+        });
 
         ResetPassword::createUrlUsing(function ($user, string $token) {
             return config('app.frontend_url') . "/reset-password?token={$token}&email={$user->email}";

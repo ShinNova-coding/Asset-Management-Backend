@@ -16,7 +16,7 @@ class ReturnAssignmentController extends Controller
         PermissionController::checkPermission('update-assignments');
         try {
             $id = $request->input('asset_id');
-            $assignment = Assignment::where('id', $id)->where('status', 'active')->first();      
+            $assignment = Assignment::where('assets_id', $id)->where('status', 'active')->first();      
            
             if (!$assignment) {
                 return response()->json([
@@ -24,8 +24,13 @@ class ReturnAssignmentController extends Controller
                     'message' => 'Active assignment not found for this asset'
                 ], 404);
             }
-
-            
+            $asset=Asset::where('id', $assignment->assets_id)->first();
+            if($asset->status=='maintainance'){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Asset is under maintainance'
+                ], 400);
+            }
 
             $assignment->update([
                 'status' => 'returned',

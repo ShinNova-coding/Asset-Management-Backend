@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\PermissionController;
 use App\Models\Asset;
+use App\Models\Asset_record;
+use App\Models\Assetrecord;
+use App\Models\Assignment;
 use App\Models\Maintenance;
 use DB;
 use Exception;
@@ -52,19 +55,26 @@ class MaintenanceRequestController extends Controller
                             'categories_id' => $asset->category_id,
                             'issue_type' => $request->issue_type,
                             'problem_description' => $request->problem_description,
-                            'status' => 'requested'
+                            'status' => 'requested',
+                            'maintenance_date' => now()
                         ]);
+
+                        $asset->update(['status' => 'maintenance']);
+                        Asset_record::create([
+                            'assets_id' => $asset->id,
+                            'users_id' => auth()->id(),
+                            'status' => 'maintenance_requested'
+                        ]);
+
                         if ($request->filled('evidence_image')) {
                             $m->addMediaFromBase64($request->evidence_image)->toMediaCollection('evidences');
                         }
                         return $m;
                     });
-                    
-                return response()->json(['success' => true, 'data' => $maintenance, 'message' => 'Request sent successfully'], 201);
+
+                    return response()->json(['success' => true, 'data' => $maintenance, 'message' => 'Request sent successfully'], 201);
 
                 case 'approved':
-                case 'maintenance':
-                case 'completed':
                 case 'canceled':
                     $maintenance = Maintenance::where('assets_id', $assetId)
                         ->whereNotIn('status', ['completed', 'canceled'])
@@ -75,7 +85,7 @@ class MaintenanceRequestController extends Controller
                         return response()->json(['success' => false, 'message' => 'No active maintenance request found'], 404);
                     }
 
-                    return $this->handleUpdate($maintenance, $status, $request);
+                    return $this->handleUpdate($maintenance, $status, $request, $asset);
 
                 default:
                     return response()->json(['success' => false, 'message' => 'Invalid status type'], 400);
@@ -86,41 +96,38 @@ class MaintenanceRequestController extends Controller
         }
     }
 
-    private function handleUpdate($maintenance, $status, $request)
+    private function handleUpdate($maintenance, $status, $request, $asset)
     {
         switch ($status) {
             case 'approved':
                 PermissionController::checkPermission('approve-maintenance-requests');
-                $maintenance->update(['status' => 'pending']);
-                break;
 
-            case 'maintenance':
-                PermissionController::checkPermission('update-maintenance-requests');
-                $request->validate(['remark' => 'required']);
-                $maintenance->update(['status' => 'maintenance', 'remark' => $request->remark, 'maintenance_date' => now()]);
-                Asset::where('id', $maintenance->assets_id)->update(['status' => 'maintenance']);
-                break;
-
-            case 'completed':
-                PermissionController::checkPermission('update-maintenance-requests');
                 $request->validate([
-                    'vendor' => 'required',
-                    'vendor_phno' => 'required',
-                    'vendor_address' => 'required',
-                    'cost' => 'required|integer',
-                    'duration' => 'required|integer',
-                    'payment' => 'required'
+                    'remark' => 'required'
                 ]);
-                $maintenance->update(array_merge($request->only(['vendor', 'vendor_phno', 'vendor_address', 'cost', 'duration', 'payment']), [
-                    'status' => 'completed', 'completed_date' => now()
-                ]));
-                Asset::where('id', $maintenance->assets_id)->update(['status' => 'available']);
+                $maintenance->update(['status' => 'approved', 'remark' => $request->remark, 'accepted_by' => auth()->id()]);
+
+                $asset->update(['status' => 'maintenance']);
+
+                Asset_record::create([
+                    'assets_id' => $maintenance->assets_id,
+                    'users_id' => auth()->id(),
+                    'status' => 'maintenance_approved'
+                ]);
                 break;
 
             case 'canceled':
+
                 PermissionController::checkPermission('cancel-maintenance-requests');
-                $maintenance->update(['status' => 'canceled', 'completed_date' => now()]);
-                Asset::where('id', $maintenance->assets_id)->update(['status' => 'available']);
+
+                $maintenance->update(['status' => 'canceled']);
+
+                Asset_record::create([
+                    'assets_id' => $maintenance->assets_id,
+                    'users_id' => auth()->id(),
+                    'status' => 'maintenance_canceled'
+                ]);
+                Asset::where('id', $maintenance->assets_id)->update(['status' => 'assigned']);
                 break;
         }
 

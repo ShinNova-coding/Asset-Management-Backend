@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\MaintenancestatusController;
+use App\Http\Controllers\Api\AssignController;
 use App\Http\Controllers\Api\CategoryAssetController;
 use App\Http\Controllers\Admin\AssetRequestController;
 use App\Http\Controllers\Admin\MaintenanceRequestController;
@@ -68,6 +69,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/maintenance/asset',[GetEmployeeMaintenanceController::class, 'getEmployeeMaintenance'])->name('maintenance.getEmployeeMaintenance');
     Route::post('/maintenance/status', [MaintenanceRequestController::class, 'updateStatus'])->name('maintenance.request');
     Route::post('/admin/maintenance/status', [MaintenanceRequestController::class, 'updateStatus'])->name('maintenance.status');
+    Route::post('/admin/maintenance/availableasset', [AssignController::class, 'availableAssets'])->name('asset.available');
+    Route::post('/admin/maintenance/reassign', [AssignController::class, 'reassignAsset'])->name('asset.reassign');
     Route::resource('maintenance', MaintenanceController::class);
 
     Route::get('/activitylogs', [ActivitylogsController::class, 'activitylogs']);

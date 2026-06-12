@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\PermissionController;
 use App\Models\Asset;
+use App\Models\Asset_record;
+use App\Models\Assignment;
 use App\Models\Maintenance;
 use DB;
 use Exception;
@@ -18,7 +20,7 @@ class MaintenanceController extends Controller
     public function index()
     {
         PermissionController::checkPermission('view-maintenances');
-        $maintenances = Maintenance::with('asset')->latest()->get();
+        $maintenances = Maintenance::with('asset', 'user', 'category')->latest()->get();
         if ($maintenances->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'No maintenances found'], 404);
         }
@@ -46,13 +48,7 @@ class MaintenanceController extends Controller
                 'categories_id' => 'required|exists:categories,id',
                 'issue_type' => 'required|string',
                 'problem_description' => 'required|string',
-                'vendor' => 'required|string',
-                'vendor_phno' => 'required|string',
-                'vendor_address' => 'required|string',
-                'cost' => 'required|integer',
                 'remark' => 'required',
-                'duration' => 'required|integer',
-                'payment' => 'required',
                 'maintenance_date' => 'required|date',
                 'status' => 'required',
                 'evidence_image' => 'required'
@@ -108,12 +104,16 @@ class MaintenanceController extends Controller
     public function show(Request $request)
     {
         PermissionController::checkPermission('view-maintenances');
+        
         try {
             $id = $request->input('maintenance_id');
-            $maintenance = Maintenance::with('asset')->find($id);
+            $maintenance = Maintenance::with('asset', 'user', 'category')->find($id);
 
             if (!$maintenance) {
-                return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
+                return response()->json([
+                 'success' => false,
+                 'data' => $id,
+                 'message' => 'Maintenance not found'], 404);
             }
 
             $image_url = $maintenance->getFirstMediaUrl('evidences') ?: null;
@@ -134,6 +134,7 @@ class MaintenanceController extends Controller
     public function update(Request $request)
     {
         PermissionController::checkPermission('update-maintenances');
+        
         try {
             $id = $request->input('maintenance_id');
             $maintenance = Maintenance::find($id);
@@ -142,30 +143,23 @@ class MaintenanceController extends Controller
             }
 
             $request->validate([
-                'assets_id' => 'required|exists:assets,id',
-                'users_id' => 'required|exists:users,id',
-                'categories_id' => 'required|exists:categories,id',
-                'issue_type' => 'required|string',
-                'problem_description' => 'required|string',
-                'vendor' => 'required|string',
-                'vendor_phno' => 'required|string',
-                'vendor_address' => 'required|string',
-                'cost' => 'required|integer',
-                'remark' => 'required',
-                'duration' => 'required|integer',
-                'payment' => 'required|integer',
-                'status' => 'required',
-                'maintenance_date' => 'required|date',
-                'evidence_image' => 'nullable|string'
+                'completed_date' => 'required|date',
             ]);
 
-            if ($request->has('evidence_image') && $request->filled('evidence_image')) {
-                $maintenance->clearMediaCollection('images');
-                $maintenance->addMediaFromBase64($request->evidence_image)
-                    ->toMediaCollection('evidences');
-            }
+            $maintenance->update([
+                'status' => 'returned',
+                'completed_date' => $request->completed_date
+            ]);
 
-            $maintenance->update($request->except('evidence_image','maintenance_id'));
+            $assigned = Assignment::where('assets_id', $maintenance->assets_id)->where('status', 'active');
+            $assigned->update(['status' => 'returned']);
+            Asset::where('id', $maintenance->assets_id)->update(['status' => 'available']);
+            
+            Asset_record::create([
+                    'assets_id' => $maintenance->assets_id,
+                    'users_id' => auth()->id(),
+                    'status' => 'maintenance_returned'  
+                ]);
 
             $image_url = $maintenance->getFirstMediaUrl('images') ?: null;
             $preview_url = $maintenance->getFirstMediaUrl('images', 'preview') ?: null;
@@ -192,15 +186,35 @@ class MaintenanceController extends Controller
         PermissionController::checkPermission('delete-maintenances');
         try {
             $id = $request->input('maintenance_id');
+            
             $maintenance = Maintenance::find($id);
+
             if (!$maintenance) {
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
+
+            if($maintenance->status=='requested'||$maintenance->status=='approved'){
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Maintenance is only allowed to delete if it is returned'
+                    ], 422);
+            }
+            
             Asset::where('id', $maintenance->assets_id)->update(['status' => 'available']);
+           
             $maintenance->delete();
-            return response()->json(['success' => true, 'message' => 'Maintenance record deleted successfully'], 200);
+
+            return response()->json([
+                'success' => true, 
+                'message' => 'Maintenance record deleted successfully'
+                ], 200);
+
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+
+            return response()->json([
+                'success' => false, 
+                'message' => $e->getMessage()
+                ], 500);
         }
     }
 

@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -150,7 +151,11 @@ class UserController extends Controller
             $user = User::firstWhere('id', $id);
             $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email,' . $user->id . ',id',
+                'email' => [
+                    'required',
+                    'email',
+                    Rule::unique('users', 'email')->ignore($user->id),
+                ],
                 'joined_date' => 'required|date',
                 'position' => 'nullable|string|max:255',
                 'phone_number' => 'nullable|string|max:20',

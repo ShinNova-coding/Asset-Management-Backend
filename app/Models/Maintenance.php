@@ -10,23 +10,31 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Maintenance extends Model implements HasMedia
 {
-    use HasFactory,InteractsWithMedia,HasUuids;
+    use HasFactory, InteractsWithMedia, HasUuids;
 
-    protected $guarded=[];
+    protected $guarded = [];
 
-    public function asset(){
-        return $this->belongsTo(Asset::class,'assets_id');
+    public function asset()
+    {
+        return $this->belongsTo(Asset::class, 'assets_id');
     }
 
-    public function user(){
-        return $this->belongsTo(User::class,'users_id');
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'users_id');
     }
 
-    public function category(){
-        return $this->belongsTo(Category::class,'categories_id');
-     }
+    public function acceptedBy()
+    {
+        return $this->belongsTo(User::class, 'accepted_by');
+    }
 
-    
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'categories_id');
+    }
+
+
 
 
 }

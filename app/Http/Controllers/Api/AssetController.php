@@ -8,6 +8,7 @@ use App\Models\Asset;
 use DB;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 
 class AssetController extends Controller
@@ -167,13 +168,16 @@ class AssetController extends Controller
 
             $request->validate([
                 'name' => 'required|string|max:255',
-                'serial_number' => 'required|unique:assets,serial_number,' . $id . ',id',
+                'serial_number' => [
+                    'sometimes', 
+                    Rule::unique('assets', 'serial_number')->ignore($id),
+                ],
                 'purchased_date' => 'required|date',
                 'warranty_period' => 'required|integer',
                 'category_id' => 'required|exists:categories,id',
                 'status' => 'required|string',
                 'condition' => 'required|string',
-                'image' => 'required|string',
+                'image' => 'string',
                 'ram_capacity'=>'required|string',
                 'storage'=>'required|string',
             ]);
@@ -224,6 +228,18 @@ class AssetController extends Controller
                 ], 404);
             }
 
+            if($asset->status=='assigned'){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Asset is assigned'
+                ], 422);
+            }
+            elseif($asset->status=='maintenance'){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Asset is under maintenance'
+                ]);
+            }
             $asset->delete();
 
 
