@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Auth;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable implements HasMedia
+{
+    use Notifiable,HasApiTokens,HasRoles,InteractsWithMedia,HasUuids;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $guarded = [];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    public $incrementing = false;
+    protected $keyType = 'string';
+    protected $guard_name = 'sanctum';
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    public function registerMediaConversions(?Media $media=null):void
+    {
+        $this->addMediaConversion('preview')//preview loh naming pay call tone poh
+             ->fit(Fit::Contain,300,300)//image size
+             ->nonQueued();//no wait 
+    }
+
+    public function registerMediaCollections():void
+    {
+        $this->addMediaCollection('images')//call tone poh naming
+             ->acceptsMimeTypes(['image/jpeg', 'image/jpg', 'image/png'])//rule tat mark
+             ->singleFile();//delete old photos
+    }
+
+   
+
+   public function assignment(){
+    return $this->hasMany(Assignment::class);
+   }
+   
+ 
+}

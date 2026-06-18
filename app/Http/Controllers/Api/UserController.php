@@ -1,0 +1,243 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\AssetAssignmentController;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\PermissionController;
+use App\Models\Assignment;
+use App\Models\User;
+use Auth;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+
+class UserController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+
+    public function index()
+    {
+        PermissionController::checkPermission('view-users');
+        $users = User::with('roles')->paginate(50);
+        if ($users->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'no user found',
+            ]);
+        }
+        
+         foreach ($users as $user) {
+            $user->image_url = $user->getFirstMediaUrl('images') ?: null;
+            $user->preview_url = $user->getFirstMediaUrl('images', 'preview') ?: null;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $users,
+            'message' => 'User found successfully!!',
+        ], 200);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        PermissionController::checkPermission('create-users');
+        try {
+            $request->validate([
+                'employee_id' => 'required|string|unique:users,employee_id',
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'joined_date' => 'required|date',
+                'position' => 'required|string|max:255',
+                'phone_number' => 'required|string|max:20',
+                'password' => 'required|min:8|confirmed',
+                'role' => 'required',
+                'image' => 'required|string',
+                'left_date' => 'nullable|date|after_or_equal:joined_date',
+                'status' => 'required|in:active,suspended,resigned',
+            ]);
+
+            $user = DB::transaction(function () use ($request) {
+
+                $user = User::create([
+                    'employee_id' => $request->employee_id,
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'joined_date' => $request->joined_date,
+                    'position' => $request->position,
+                    'phone_number' => $request->phone_number,
+                    'password' => Hash::make($request->password),
+                    'status' => $request->status,
+                    'left_date' => $request->left_date,
+                ]);
+
+                $user->assignRole($request->role);
+
+                $user->load('roles');
+
+                if ($request->has('image') && $request->filled('image')) {
+                    $user->addMediaFromBase64($request->image)
+                        ->toMediaCollection('images');
+                }
+                return $user;
+            });
+
+            $image_url = $user->getFirstMediaUrl('images') ?: null;
+            $preview_url = $user->getFirstMediaUrl('images', 'preview') ?: null;
+
+            $user->image_url = $image_url;
+            $user->preview_url = $preview_url;
+            return response()->json([
+                'success' => true,
+                'data' => $user,
+                'message' => 'User created successfully!!',
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Request $request)
+    {
+        PermissionController::checkPermission('view-users');
+
+        $id = $request->input('id');
+
+        $showuser = User::find($id);
+        if (!$showuser) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No user found for this specific ID',
+            ]);
+        }
+        $showuser->load('roles');
+
+        $image_url = $showuser->getFirstMediaUrl('images') ?: null;
+        $preview_url = $showuser->getFirstMediaUrl('images', 'preview') ?: null;
+
+        $showuser->image_url = $image_url;
+        $showuser->preview_url = $preview_url;
+
+        return response()->json([
+            'success' => true,
+            'data' => $showuser,
+            'message' => 'User found successfully!!',
+        ], 200);
+
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request)
+    {
+        PermissionController::checkPermission('update-users');
+        try {
+            $id = $request->input('id');
+            $user = User::find($id);
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => [
+                    'required',
+                    'email',
+                    Rule::unique('users', 'email')->ignore($user->id),
+                ],
+                'joined_date' => 'required|date',
+                'position' => 'nullable|string|max:255',
+                'phone_number' => 'nullable|string|max:20',
+                'role' => 'required',
+                'status' => 'required|in:active,inactive,suspended,resigned',
+                'image' => 'required|string'
+            ]);
+
+            if($request->status ==='suspended'){
+                UserSuspendResignController::updateStatus($request);
+            }
+
+            if($request->status ==='resigned'){
+                UserSuspendResignController::updateStatus($request);
+            }
+
+            $data = $request->except('password', 'role', 'image');
+
+            if ($request->filled('password')) {
+                $data['password'] = Hash::make($request->password);
+            }
+
+            if ($request->has('image') && $request->filled('image')) {
+                $user->clearMediaCollection('images');
+                $user->addMediaFromBase64($request->image)
+                    ->toMediaCollection('images');
+            }
+            $user->update($data);
+
+            if ($request->filled('role')) {
+                $user->syncRoles($request->role);
+            }
+
+            $user->load('roles');
+            return response()->json([
+                'success' => true,
+                'data' => $user->refresh(),
+                'message' => 'User updated successfully!!',
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Request $request)
+    {
+        PermissionController::checkPermission('delete-users');
+        try {
+            $id = $request->input('id');
+            $user = User::find($id);
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found!!',
+                ], 404);
+            }
+
+            if ($user->hasRole('admin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Admin user cannot be deleted!!',
+                ], 403);
+            }
+            $user->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'User deleted successfully!!',
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+    
+
+}
