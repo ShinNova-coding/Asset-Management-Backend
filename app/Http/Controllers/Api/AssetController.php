@@ -21,7 +21,7 @@ class AssetController extends Controller
         PermissionController::checkPermission('view-assets');
         try {
 
-            $assets = Asset::with('category')->latest()->paginate(50);
+            $assets = Asset::with('category')->latest()->get();
 
 
             if ($assets->isEmpty()) {

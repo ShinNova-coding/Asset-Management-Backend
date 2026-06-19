@@ -52,13 +52,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/assignment/return', [ReturnAssignmentController::class, 'returnAssignment'])->name('assignment.return');
     Route::resource('assignment', AssignmentController::class);
 
-   
     Route::get('/report/user', [ReportController::class, 'userReport'])->name('report.user');
     Route::get('/report/asset', [ReportController::class, 'assetReport'])->name('report.asset');
     Route::get('/report/category', [ReportController::class, 'categoryReport'])->name('report.category');
 
     Route::get('/dashboard', [DashboardController::class, 'dashboardview'])->name('dashboard');
 
+    Route::post('/save-fcm-token', [UserController::class, 'saveFcmToken']);
     Route::post('/admin/users/status', [UserSuspendResignController::class, 'updateStatus']);
     Route::resource('user', UserController::class);
     Route::get('/profile', [ProfileController::class, 'viewProfile']);

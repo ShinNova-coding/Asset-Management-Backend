@@ -10,6 +10,7 @@ use App\Models\Assignment;
 use App\Models\Expense;
 use App\Models\Maintenance;
 use App\Models\User;
+use App\Services\FirebaseNotificationService;
 use DB;
 use Exception;
 use Illuminate\Http\Request;
@@ -133,7 +134,7 @@ class MaintenanceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request)
+    public function update(Request $request, FirebaseNotificationService $firebaseService)
     {
         PermissionController::checkPermission('update-maintenances');
         
@@ -192,6 +193,16 @@ class MaintenanceController extends Controller
             $maintenance->image_url = $image_url;
             $maintenance->preview_url = $preview_url;
 
+            $user=User::find($maintenance->users_id);
+            
+            if($user&& $user->fcm_token){
+               $firebaseService->send(
+                $user->fcm_token, 
+                'Maintenance', 
+                'Maintenance has been returned'.' '.$maintenance->asset->name);
+ 
+            }
+            
             return response()->json([
                 'success' => true,
                 'data' => $maintenance,

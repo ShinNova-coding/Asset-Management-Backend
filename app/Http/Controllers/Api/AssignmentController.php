@@ -8,36 +8,39 @@ use App\Models\Asset;
 use App\Models\Asset_record;
 use App\Models\Assignment;
 use App\Models\User;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\FirebaseService;
 
 use Exception;
+use Kreait\Firebase\Messaging\CloudMessage;
 
 class AssignmentController extends Controller
 {
-   
+
     public function index()
     {
         PermissionController::checkPermission('view-assignments');
-        $assignments = Assignment::with(['asset','user'])
-                                  ->latest()->get();
-                 
+        $assignments = Assignment::with(['asset', 'user'])
+            ->latest()->get();
+
         if ($assignments->isEmpty()) {
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'No assignments found'
-                ], 404);
+            ], 404);
         }
         return response()->json([
             'success' => true,
             'data' => $assignments,
             'message' => 'Assignments retrieved successfully'
         ], 200);
-        
 
-        }
 
-    public function store(Request $request)
+    }
+
+    public function store(Request $request, FirebaseNotificationService $firebaseService)
     {
         PermissionController::checkPermission('create-assignments');
         try {
@@ -51,10 +54,10 @@ class AssignmentController extends Controller
             if ($asset->status !== 'available') {
                 return response()->json(['success' => false, 'message' => 'Asset not available'], 400);
             }
-            $asset_id=$asset->id;
+            $asset_id = $asset->id;
             $users_id = User::where('name', $request->users_name)->first()->id;
 
-             $assignment = DB::transaction(function () use ($request, $asset_id, $users_id) {
+            $assignment = DB::transaction(function () use ($request, $asset_id, $users_id) {
                 $assignment = Assignment::create([
                     'assets_id' => $asset_id,
                     'users_id' => $users_id,
@@ -63,17 +66,26 @@ class AssignmentController extends Controller
                     'status' => 'active'
                 ]);
 
-            Asset_record::create([
-                'assets_id' => $asset_id,
-                'users_id' => $users_id,
-                'status' => 'asset_assigned',
-            ]);
+                Asset_record::create([
+                    'assets_id' => $asset_id,
+                    'users_id' => $users_id,
+                    'status' => 'asset_assigned',
+                ]);
 
-            return $assignment;
-        });
+                return $assignment;
+            });
 
             $asset->update(['status' => 'assigned']);
 
+            $user = User::where('id', $assignment->users_id)->first();
+            if ($user && $user->fcm_token) {
+
+                $firebaseService->send(
+                    $user->fcm_token,
+                    'Asset Assigned',
+                    'You have been assigned: ' . $asset->name
+                );
+            }
             return response()->json(['success' => true, 'data' => $assignment], 201);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -112,7 +124,7 @@ class AssignmentController extends Controller
                 'note' => 'nullable|string',
                 'assigned_date' => 'date'
             ]);
-            $asset=Asset::where('asset_code', $request->assets_code)->first();
+            $asset = Asset::where('asset_code', $request->assets_code)->first();
             $assignment->update([
                 'assets_id' => $asset->id,
                 'note' => $request->note,
@@ -162,8 +174,8 @@ class AssignmentController extends Controller
             ]);
 
 
-            $assignment->delete(); 
-            
+            $assignment->delete();
+
 
             return response()->json(['success' => true, 'message' => 'Deleted and Asset released']);
         } catch (Exception $e) {
@@ -171,8 +183,8 @@ class AssignmentController extends Controller
         }
     }
 
-    
 
-   
-    
+
+
+
 }
