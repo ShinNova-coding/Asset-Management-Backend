@@ -76,16 +76,24 @@ class AssignmentController extends Controller
             });
 
             $asset->update(['status' => 'assigned']);
+            try {
+                $user = User::where('id', $assignment->users_id)->first();
+                if ($user && $user->fcm_token) {
 
-            $user = User::where('id', $assignment->users_id)->first();
-            if ($user && $user->fcm_token) {
+                    $firebaseService->send(
+                        $user->fcm_token,
+                        'Asset Assigned',
+                        'You have been assigned: ' . $asset->name
+                    );
+                }
 
-                $firebaseService->send(
-                    $user->fcm_token,
-                    'Asset Assigned',
-                    'You have been assigned: ' . $asset->name
-                );
+            } catch (Exception $e) {
+                if (str_contains($e->getMessage(), 'registration token is not a valid')) {
+                    $user->update(['fcm_token' => null]);
+                }
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
+
             return response()->json(['success' => true, 'data' => $assignment], 201);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

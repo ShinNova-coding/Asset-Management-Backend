@@ -14,7 +14,7 @@ class RoleController extends Controller
     {
         PermissionController::checkPermission('view-roles');
         
-        $roles = Role::with('permissions')->where('name', '!=', 'super-admin')->get();
+        $roles = Role::with('permissions')->get();
 
         return response()->json([
             'status' => 'success',
@@ -87,11 +87,17 @@ class RoleController extends Controller
     public function destroy(Request $request)
     {
         PermissionController::checkPermission('delete-roles');
-        
-        $role = Role::find($request->input('role_id'));
+        $role_id=$request->input('role_id');
+        $role = Role::find($role_id);
 
         if (!$role) {
             return response()->json(['status' => 'error', 'message' => 'Role not found'], 404);
+        }
+
+        if($role->name=='super-admin'){
+            return response()->json([
+                'success' => false, 
+                'message' => 'Super admin role cannot be deleted'], 422);
         }
 
         $role->delete();

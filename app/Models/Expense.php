@@ -9,21 +9,21 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Expense extends Model implements HasMedia
 {
-    use HasUuids,InteractsWithMedia;
+    use HasUuids, InteractsWithMedia;
     protected $guarded = [];
 
     public function user()
     {
-        return $this->belongsTo(User::class);
-    }
-
-    public function maintenance()
-    {
-        return $this->belongsTo(Maintenance::class);
+        return $this->belongsTo(User::class, 'users_id');
     }
 
     public function asset()
     {
-        return $this->belongsTo(Asset::class);
+        return $this->belongsTo(Asset::class, 'assets_id');
+    }
+
+    public function maintenance()
+    {
+        return $this->belongsTo(Maintenance::class, 'maintenances_id');
     }
 }

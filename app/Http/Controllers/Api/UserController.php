@@ -220,7 +220,7 @@ class UserController extends Controller
                 ], 404);
             }
 
-            if ($user->hasRole('admin')) {
+            if ($user->hasRole('super-admin')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Admin user cannot be deleted!!',

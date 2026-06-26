@@ -10,12 +10,19 @@ class MonthlyYearlyReportController extends Controller
 {
     public function monthlyyearlyReport(Request $request) {
         PermissionController::checkPermission('view-expenses');
+
         $month=$request->input('month');
         $year=$request->input('year');
-        $expenses = Expense::whereMonth('expense_date', '=', $month)
-        ->whereYear('expense_date', '=', $year)
-        ->sum('cost');
 
+        $query = Expense::whereYear('expense_date', '=', $year)
+        ->where('status', '=', 'approved');
+
+        if($month){
+            $query->whereMonth('expense_date', '=', $month);
+        }
+
+        $expenses = $query->sum('cost');
+        
         if(!$expenses){
             return response()->json([
                 'success' => false, 

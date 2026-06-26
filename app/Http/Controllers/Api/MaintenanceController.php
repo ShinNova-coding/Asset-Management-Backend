@@ -28,12 +28,16 @@ class MaintenanceController extends Controller
             return response()->json(['success' => false, 'message' => 'No maintenances found'], 404);
         }
         foreach ($maintenances as $maintenance) {
-            $maintenance->accepted_by=User::find($maintenance->accepted_by);
+            $maintenance->accepted_by = User::find($maintenance->accepted_by);
             $image_url = $maintenance->getFirstMediaUrl('evidences') ?: null;
             $preview_url = $maintenance->getFirstMediaUrl('evidences', 'preview') ?: null;
 
             $maintenance->image_url = $image_url;
             $maintenance->preview_url = $preview_url;
+
+            $maintenance->voucher_image_url = $maintenance->getFirstMediaUrl('maintain_vouchers') ?: null;
+            $maintenance->voucher_preview_url = $maintenance->getFirstMediaUrl('maintain_vouchers', 'preview') ?: null;
+
         }
         return response()->json(['success' => true, 'data' => $maintenances], 200);
     }
@@ -43,62 +47,7 @@ class MaintenanceController extends Controller
      */
     public static function store(Request $request)
     {
-        PermissionController::checkPermission('create-maintenances');
-        try {
-            $request->validate([
-                'assets_id' => 'required|exists:assets,id',
-                'users_id' => 'required|exists:users,id',
-                'categories_id' => 'required|exists:categories,id',
-                'issue_type' => 'required|string',
-                'problem_description' => 'required|string',
-                'remark' => 'required',
-                'maintenance_date' => 'required|date',
-                'status' => 'required',
-                'evidence_image' => 'required'
-            ]);
 
-
-            $asset = Asset::where('id', $request->assets_id)->first();
-            if ($asset->status !== 'available') {
-                return response()->json(['success' => false, 'message' => 'Asset not available for maintenance'], 400);
-            }
-            $maintenance = DB::transaction(function () use ($request) {
-                $maintenance = Maintenance::create([
-                    'assets_id' => $request->assets_id,
-                    'users_id' => $request->users_id,
-                    'categories_id' => $request->categories_id,
-                    'issue_type' => $request->issue_type,
-                    'problem_description' => $request->problem_description,
-                    'vendor' => $request->vendor,
-                    'vendor_phno' => $request->vendor_phno,
-                    'vendor_address' => $request->vendor_address,
-                    'cost' => $request->cost,
-                    'status' => $request->status,
-                    'remark' => $request->remark,
-                    'duration' => $request->duration,
-                    'payment' => $request->payment,
-                    'maintenance_date' => $request->maintenance_date
-                ]);
-
-                if ($request->has('evidence_image') && $request->filled('image')) {
-                    $maintenance->addMediaFromBase64($request->image)
-                        ->toMediaCollection('evidences');
-                }
-
-                return $maintenance;
-            });
-
-            $image_url = $maintenance->getFirstMediaUrl('evidences') ?: null;
-            $preview_url = $maintenance->getFirstMediaUrl('evidences', 'preview') ?: null;
-
-            $maintenance->image_url = $image_url;
-            $maintenance->preview_url = $preview_url;
-
-            $asset->update(['status' => 'maintenance']);
-            return response()->json(['success' => true, 'data' => $maintenance], 201);
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
     }
 
     /**
@@ -107,16 +56,17 @@ class MaintenanceController extends Controller
     public function show(Request $request)
     {
         PermissionController::checkPermission('view-maintenances');
-        
+
         try {
             $id = $request->input('maintenance_id');
             $maintenance = Maintenance::with('asset', 'user', 'category')->find($id);
 
             if (!$maintenance) {
                 return response()->json([
-                 'success' => false,
-                 'data' => $id,
-                 'message' => 'Maintenance not found'], 404);
+                    'success' => false,
+                    'data' => $id,
+                    'message' => 'Maintenance not found'
+                ], 404);
             }
 
             $image_url = $maintenance->getFirstMediaUrl('evidences') ?: null;
@@ -124,6 +74,10 @@ class MaintenanceController extends Controller
 
             $maintenance->image_url = $image_url;
             $maintenance->preview_url = $preview_url;
+
+             $maintenance->voucher_image_url = $maintenance->getFirstMediaUrl('maintain_vouchers') ?: null;
+            $maintenance->voucher_preview_url = $maintenance->getFirstMediaUrl('maintain_vouchers', 'preview') ?: null;
+
 
             return response()->json(['success' => true, 'data' => $maintenance], 200);
         } catch (Exception $e) {
@@ -137,14 +91,14 @@ class MaintenanceController extends Controller
     public function update(Request $request, FirebaseNotificationService $firebaseService)
     {
         PermissionController::checkPermission('update-maintenances');
-        
+
         try {
             $id = $request->input('maintenance_id');
             $maintenance = Maintenance::find($id);
             if (!$maintenance) {
                 return response()->json(['success' => false, 'message' => 'Maintenance not found'], 404);
             }
-            
+
             $request->validate([
                 'completed_date' => 'required|date',
                 'vendor' => 'required|string',
@@ -153,8 +107,9 @@ class MaintenanceController extends Controller
                 'cost' => 'required|numeric',
                 'payment' => 'required|string',
                 'duration' => 'required|numeric',
+                'voucher' => 'required|string'
             ]);
-            
+
 
             $maintenance->update([
                 'status' => 'returned',
@@ -167,10 +122,10 @@ class MaintenanceController extends Controller
                 'duration' => $request->duration
             ]);
 
-            Expense::create([
+            $expense = Expense::create([
                 'users_id' => auth()->id(),
                 'assets_id' => $maintenance->assets_id,
-                'maintenance_id' => $maintenance->id,
+                'maintenances_id' => $maintenance->id,
                 'cost' => $maintenance->cost,
                 'title' => 'Maintenance',
                 'expense_date' => $maintenance->completed_date,
@@ -178,31 +133,57 @@ class MaintenanceController extends Controller
                 'status' => 'approved',
             ]);
 
-            ReturnAssignmentController::returnAssignment($request);
-            Asset::where('id', $maintenance->assets_id)->update(['status' => 'available']);
-            
-            Asset_record::create([
-                    'assets_id' => $maintenance->assets_id,
-                    'users_id' => auth()->id(),
-                    'status' => 'maintenance_returned'  
-                ]);
+            if ($request->has('voucher') && $request->filled('voucher')) {
+                $voucherData = $request->voucher;
 
-            $image_url = $maintenance->getFirstMediaUrl('images') ?: null;
-            $preview_url = $maintenance->getFirstMediaUrl('images', 'preview') ?: null;
+                $maintenance->clearMediaCollection('maintain_vouchers');
+                $maintenance->addMediaFromBase64($voucherData)->toMediaCollection('maintain_vouchers');
 
-            $maintenance->image_url = $image_url;
-            $maintenance->preview_url = $preview_url;
-
-            $user=User::find($maintenance->users_id);
-            
-            if($user&& $user->fcm_token){
-               $firebaseService->send(
-                $user->fcm_token, 
-                'Maintenance', 
-                'Maintenance has been returned'.' '.$maintenance->asset->name);
- 
+                $expense->addMediaFromBase64($voucherData)->toMediaCollection('vouchers');
             }
+
+            $maintenance->voucher_image_url = $maintenance->getFirstMediaUrl('maintain_vouchers') ?: null;
+            $maintenance->voucher_preview_url = $maintenance->getFirstMediaUrl('maintain_vouchers', 'preview') ?: null;
+
+            $expense->image_url = $expense->getFirstMediaUrl('vouchers') ?: null;
+            $expense->preview_url = $expense->getFirstMediaUrl('vouchers', 'preview') ?: null;
             
+
+            $user = User::find($maintenance->users_id);
+
+            if($user->status == 'suspended'|| $user->status == 'resigned'){ 
+            Asset::where('id', $maintenance->assets_id)->update(['status' => 'available']);
+            Assignment::where('assets_id', $maintenance->assets_id)
+                      ->update([
+                        'status' => 'returned',
+                        'returned_date' => now()]);
+                
+            }
+
+            Asset::where('id', $maintenance->assets_id)->update(['status' => 'assigned']);
+
+            Asset_record::create([
+                'assets_id' => $maintenance->assets_id,
+                'users_id' => auth()->id(),
+                'status' => 'maintenance_returned'
+            ]);
+
+            $evidence_image_url = $maintenance->getFirstMediaUrl('evidences') ?: null;
+            $evidence_preview_url = $maintenance->getFirstMediaUrl('evidences', 'preview') ?: null;
+
+            $maintenance->evidence_image_url = $evidence_image_url;
+            $maintenance->evidence_preview_url = $evidence_preview_url;
+
+
+            if ($user && $user->fcm_token) {
+                $firebaseService->send(
+                    $user->fcm_token,
+                    'Maintenance',
+                    'Maintenance has been approved' . ' ' . $maintenance->asset->name
+                );
+
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => $maintenance,
@@ -222,37 +203,38 @@ class MaintenanceController extends Controller
         PermissionController::checkPermission('delete-maintenances');
         try {
             $id = $request->input('maintenance_id');
-            
+
             $maintenance = Maintenance::find($id);
 
             if (!$maintenance) {
                 return response()->json([
-                    'success' => false, 
-                    'message' => 'Maintenance not found'], 404);
+                    'success' => false,
+                    'message' => 'Maintenance not found'
+                ], 404);
             }
 
-            if($maintenance->status=='requested'||$maintenance->status=='approved'){
+            if ($maintenance->status == 'requested' || $maintenance->status == 'approved') {
                 return response()->json([
-                    'success' => false, 
+                    'success' => false,
                     'message' => 'Maintenance is only allowed to delete if it is returned'
-                    ], 422);
+                ], 422);
             }
-            
-            Asset::where('id', $maintenance->assets_id)->update(['status' => 'available']);
-           
+
+            Asset::where('id', $maintenance->assets_id)->update(['status' => 'assigned']);
+
             $maintenance->delete();
 
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => 'Maintenance record deleted successfully'
-                ], 200);
+            ], 200);
 
         } catch (Exception $e) {
 
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => $e->getMessage()
-                ], 500);
+            ], 500);
         }
     }
 

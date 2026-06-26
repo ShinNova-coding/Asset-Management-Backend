@@ -1,21 +1,17 @@
 <?php
 
 use App\Http\Controllers\Admin\ExpenseRequestController;
-use App\Http\Controllers\Admin\MaintenancestatusController;
 use App\Http\Controllers\Api\AssignController;
 use App\Http\Controllers\Api\CategoryAssetController;
-use App\Http\Controllers\Admin\AssetRequestController;
 use App\Http\Controllers\Admin\MaintenanceRequestController;
 use App\Http\Controllers\Api\ActivitylogsController;
 use App\Http\Controllers\Api\AssignmentActivitylogsController;
 use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\AssignmentHistoryController;
-use App\Http\Controllers\Api\AssignmentRequestController;
 use App\Http\Controllers\Api\ChangePasswordController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ExpenseController;
-use App\Http\Controllers\Api\GetEmployeeAssignmentController;
-use App\Http\Controllers\Api\GetEmployeeMaintenanceController;
+use App\Http\Controllers\Api\GetEmployeeActivityController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\MaintenanceActivitylogsController;
 use App\Http\Controllers\Api\MaintenanceController;
@@ -48,7 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::resource('asset', AssetController::class);
 
     Route::get('/assignment/history', [AssignmentHistoryController::class, 'assignmentHistory'])->name('assignment.history');
-    Route::get('/assignment/asset', [GetEmployeeAssignmentController::class, 'getEmployeeAsset'])->name('assignment.getEmployeeAsset');
+    Route::get('/assignment/asset', [GetEmployeeActivityController::class, 'getEmployeeAsset'])->name('assignment.getEmployeeAsset');
     Route::post('/assignment/return', [ReturnAssignmentController::class, 'returnAssignment'])->name('assignment.return');
     Route::resource('assignment', AssignmentController::class);
 
@@ -69,7 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/category/assets', [CategoryAssetController::class, 'categoryAsset']);
     Route::resource('category', CategoryController::class);
 
-    Route::get('/maintenance/asset',[GetEmployeeMaintenanceController::class, 'getEmployeeMaintenance'])->name('maintenance.getEmployeeMaintenance');
+    Route::get('/maintenance/asset',[GetEmployeeActivityController::class, 'getEmployeeMaintenance'])->name('maintenance.getEmployeeMaintenance');
     Route::post('/maintenance/status', [MaintenanceRequestController::class, 'updateStatus'])->name('maintenance.request');
     Route::post('/admin/maintenance/status', [MaintenanceRequestController::class, 'updateStatus'])->name('maintenance.status');
     Route::post('/admin/maintenance/availableasset', [AssignController::class, 'availableAssets'])->name('asset.available');
@@ -77,9 +73,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::resource('maintenance', MaintenanceController::class);
 
     Route::get('/activitylogs', [ActivitylogsController::class, 'activitylogs']);
-    Route::get('/assignmentlogs', [AssignmentActivitylogsController::class, 'assignmentActivitylogs']);
-    Route::get('/maintenancelogs', [MaintenanceActivitylogsController::class, 'maintenanceActivitylogs']);
 
+    Route::get('/expense/asset', [GetEmployeeActivityController::class, 'getEmployeeExpense'])->name('expense.getEmployeeExpense');
     Route::post('/expense/status', [ExpenseRequestController::class, 'updateStatus']);
     Route::get('/expense/report', [MonthlyYearlyReportController::class, 'monthlyyearlyReport']);
     Route::resource('expense', ExpenseController::class);

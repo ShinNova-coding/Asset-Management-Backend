@@ -6,19 +6,20 @@ use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\User;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 
 class ExpenseRequestController extends Controller
 {
-    public function updateStatus(Request $request)
+    public function updateStatus(Request $request,FirebaseNotificationService $firebaseService)
     {
         $status=$request->input('status');
         
 
         switch($status){
             case 'requested':
-                PermissionController::checkPermission('create-expenses');
+                PermissionController::checkPermission('create-expense-requests');
 
                 $request->validate([
             'title'=>'required',
@@ -77,6 +78,16 @@ class ExpenseRequestController extends Controller
                     'status'=>'approved',
                     'approved_by'=>$request->user()->id
                 ]);
+
+                $user=User::find('id',$expense->users_id);
+                if ($user && $user->fcm_token) {
+                $firebaseService->send(
+                    $user->fcm_token,
+                    'Expense',
+                    'Expense has been approved' . ' ' . $expense->asset->name
+                );
+
+            }
 
                 return response()->json([
                     'success'=>true,

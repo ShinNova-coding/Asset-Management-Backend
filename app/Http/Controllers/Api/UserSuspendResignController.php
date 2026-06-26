@@ -32,7 +32,9 @@ class UserSuspendResignController extends Controller
             ->get();
 
         foreach ($assignments as $assignment) {
-            $assignment->update(['status' => 'returned']);
+            $assignment->update([
+                'status' => 'returned',
+                'returned_date' => now()]);
         }
 
         $assets = Asset::whereIn('id', $assignments->pluck('assets_id'))->get();

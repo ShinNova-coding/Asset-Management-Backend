@@ -30,10 +30,11 @@ class LoginController extends Controller
         if($user->status=='suspended'||$user->status=='resigned'){
             return response()->json([
                 'success'=>false,
-                'message'=>'Your account is not active right now .'
+                'message'=>'Your account is not active right now . Please contact admin.'
             ],401);
         }
         $token=$user->createToken('auth_token')->plainTextToken;
+        $user->load('roles');
          return response()->json([
                 'success'=>true,
                 'message'=>'Login Successful',

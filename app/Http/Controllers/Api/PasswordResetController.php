@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 
@@ -14,19 +15,16 @@ class PasswordResetController extends Controller
             'email' => 'required|email|exists:users,email',
         ]);
 
-        $status=Password::sendResetLink(
-            $request->only('email')
-        );
-
-        if ($status == Password::RESET_LINK_SENT) {
+        if(User::where('email', $request->email)->exists()){
             return response()->json([
-            'success' => true,  
-            'message' => 'Password reset link sent to your email.']);
+                'success' => true,
+                'message' => 'Now You can reset your password'
+            ]);
         }
-
         return response()->json([
-        'success' => false,  
-        'message' => 'Failed to send password reset link.'], 500);
+            'success' => false,
+            'message' => 'Wrong email address!!!'
+        ]);
     }
     
     public function submitResetPasswordForm(Request $request)
@@ -34,26 +32,21 @@ class PasswordResetController extends Controller
         $request->validate([
             'email' => 'required|email|exists:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'token' => 'required'
+            
         ]); 
 
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => bcrypt($password)
-                ])->save();
-            }
-        );
-
-        if ($status == Password::PASSWORD_RESET) {
+        if(User::where('email', $request->email)->exists()){
+            $user = User::where('email', $request->email)->first();
+            $user->password = bcrypt($request->password);
+            $user->save();
             return response()->json([
                 'success' => true,
-            'message' => 'Password has been reset successfully.']);
+                'message' => 'Password reset successfully'
+            ]);
         }
-
         return response()->json([
             'success' => false,
-            'message' => 'Failed to reset password.'], 500);
+            'message' => 'Wrong email address!!!'
+        ]);
     }
 }

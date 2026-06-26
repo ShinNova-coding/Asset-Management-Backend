@@ -9,6 +9,8 @@ use App\Models\Asset_record;
 use App\Models\Assetrecord;
 use App\Models\Assignment;
 use App\Models\Maintenance;
+use App\Models\User;
+use App\Services\FirebaseNotificationService;
 use DB;
 use Exception;
 use Illuminate\Http\Request;
@@ -35,7 +37,7 @@ class MaintenanceRequestController extends Controller
                     }
 
                     $exists = Maintenance::where('assets_id', $assetId)
-                        ->whereNotIn('status', ['completed', 'canceled'])
+                        ->whereNotIn('status', ['returned', 'canceled'])
                         ->exists();
 
                     if ($exists) {
@@ -104,7 +106,7 @@ class MaintenanceRequestController extends Controller
         }
     }
 
-    private function handleUpdate($maintenance, $status, $request, $asset)
+    private function handleUpdate($maintenance, $status, $request, $asset, FirebaseNotificationService $firebaseService)
     {
         switch ($status) {
             case 'approved':
@@ -118,6 +120,15 @@ class MaintenanceRequestController extends Controller
                     'remark' => $request->remark, 
                     'accepted_by' => $request->user()->id]);
 
+                $user=User::find($maintenance->user_id);
+                if ($user && $user->fcm_token) {
+                $firebaseService->send(
+                    $user->fcm_token,
+                    'Maintenance',
+                    'Maintenance has been returned' . ' ' . $maintenance->asset->name
+                );
+
+            }
                 $asset->update(['status' => 'maintenance']);
 
                 Asset_record::create([
