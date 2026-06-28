@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\PermissionController;
 use Exception;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
@@ -106,5 +107,15 @@ class RoleController extends Controller
             'status' => 'success',
             'message' => 'Role deleted successfully'
         ]);
+    }
+
+    public function getAllPermissions(){
+
+    $permissions=Permission::all();
+    return response()->json([
+        'status' => 'success',
+        'data' => $permissions,
+        'message' => 'Permissions retrieved successfully'
+    ]);
     }
 }

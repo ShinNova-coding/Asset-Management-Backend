@@ -119,7 +119,8 @@ class MaintenanceController extends Controller
                 'vendor_address' => $request->vendor_address,
                 'cost' => $request->cost,
                 'payment' => $request->payment,
-                'duration' => $request->duration
+                'duration' => $request->duration,
+                'voucher' => $request->voucher
             ]);
 
             $expense = Expense::create([
@@ -131,6 +132,7 @@ class MaintenanceController extends Controller
                 'expense_date' => $maintenance->completed_date,
                 'expense_type' => 'maintenance',
                 'status' => 'approved',
+                'voucher' => $maintenance->voucher
             ]);
 
             if ($request->has('voucher') && $request->filled('voucher')) {
@@ -178,8 +180,8 @@ class MaintenanceController extends Controller
             if ($user && $user->fcm_token) {
                 $firebaseService->send(
                     $user->fcm_token,
-                    'Maintenance',
-                    'Maintenance has been approved' . ' ' . $maintenance->asset->name
+                    'Maintenance returned',
+                    'Maintenance has been returned' . ' ' . $maintenance->asset->name
                 );
 
             }

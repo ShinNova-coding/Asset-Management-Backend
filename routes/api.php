@@ -61,6 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/profile/edit', [ProfileController::class, 'editProfile']);
 
     Route::resource('role', RoleController::class);
+    Route::get('/permission', [RoleController::class, 'getAllPermissions']);
 
     Route::get('/category/assets', [CategoryAssetController::class, 'categoryAsset']);
     Route::resource('category', CategoryController::class);

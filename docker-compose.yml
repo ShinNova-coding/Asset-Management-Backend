@@ -1,0 +1,73 @@
+services:
+  db:
+    image: mysql:8
+    container_name: Asset_db
+    volumes:
+      - Asset_db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234QWEasz
+      MYSQL_DATABASE: asset-backendgir 
+      MYSQL_PASSWORD: env('DB_PASSWORD')
+    networks:
+      - Asset_network
+  laravel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: Asset_php
+    restart: unless-stopped
+    tty: true
+    expose:
+      - "9000"
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    environment:
+      DB_HOST: db
+      DB_DATABASE: asset-backendgir
+      DB_PASSWORD: env('DB_PASSWORD')
+      APP_NAME: Asset Management
+      APP_ENV: local
+      MAIL_MAILER: smtp
+      MAIL_SCHEME: null
+      MAIL_HOST: sandbox.smtp.mailtrap.io
+      MAIL_PORT: 2525
+      MAIL_USERNAME: 5cab4a12a23789
+      MAIL_PASSWORD: ff319fa67fa80f
+      MAIL_FROM_ADDRESS: "hello@example.com"
+      MAIL_FROM_NAME: "${APP_NAME}"
+    networks:
+      - Asset_network
+  nginx:
+    image: nginx:alpine
+    container_name: Asset_nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "0.0.0.0:1011:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - .:/var/www/html
+    depends_on:
+      - laravel
+    networks:
+      - Asset_network
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: Asset_phpmyadmin
+    restart: always
+    ports:
+      - "8899:80"
+    environment:
+      PMA_HOST: db
+      PMA_PASSWORD: env('DB_PASSWORD')
+    depends_on:
+      - db
+    networks:
+      - Asset_network
+volumes:
+  Asset_db_data:
+networks:
+  Asset_network:
+    driver: bridge

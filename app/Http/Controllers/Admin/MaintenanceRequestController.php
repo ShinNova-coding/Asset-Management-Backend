@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
 
 class MaintenanceRequestController extends Controller
 {
-    public function updateStatus(Request $request)
+    public function updateStatus(Request $request,FirebaseNotificationService $firebaseService)
     {
         try {
             $assetId = $request->input('assets_id');
@@ -89,6 +89,15 @@ class MaintenanceRequestController extends Controller
                             'message' => 'No active maintenance request found'
                             ], 404);
                     }
+                    $user=User::find($maintenance->user_id);
+                if ($user && $user->fcm_token) {
+                $firebaseService->send(
+                    $user->fcm_token,
+                    'Maintenance'.' '.$status,
+                    'Maintenance has been ' . $status . ' for' . $maintenance->asset->name
+                );
+
+            }
 
                     return $this->handleUpdate($maintenance, $status, $request, $asset);
 
@@ -106,7 +115,7 @@ class MaintenanceRequestController extends Controller
         }
     }
 
-    private function handleUpdate($maintenance, $status, $request, $asset, FirebaseNotificationService $firebaseService)
+    private function handleUpdate($maintenance, $status, $request, $asset, )
     {
         switch ($status) {
             case 'approved':
@@ -120,15 +129,7 @@ class MaintenanceRequestController extends Controller
                     'remark' => $request->remark, 
                     'accepted_by' => $request->user()->id]);
 
-                $user=User::find($maintenance->user_id);
-                if ($user && $user->fcm_token) {
-                $firebaseService->send(
-                    $user->fcm_token,
-                    'Maintenance',
-                    'Maintenance has been returned' . ' ' . $maintenance->asset->name
-                );
-
-            }
+                
                 $asset->update(['status' => 'maintenance']);
 
                 Asset_record::create([
