@@ -28,3 +28,4 @@ Thumbs.db
 /storage/framework/views/*
 /storage/app/public/*
 /storage/media-library/*
+/storage/app/firebase/firebase_credentials.json

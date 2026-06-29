@@ -120,7 +120,6 @@ class MaintenanceController extends Controller
                 'cost' => $request->cost,
                 'payment' => $request->payment,
                 'duration' => $request->duration,
-                'voucher' => $request->voucher
             ]);
 
             $expense = Expense::create([
@@ -132,7 +131,6 @@ class MaintenanceController extends Controller
                 'expense_date' => $maintenance->completed_date,
                 'expense_type' => 'maintenance',
                 'status' => 'approved',
-                'voucher' => $maintenance->voucher
             ]);
 
             if ($request->has('voucher') && $request->filled('voucher')) {

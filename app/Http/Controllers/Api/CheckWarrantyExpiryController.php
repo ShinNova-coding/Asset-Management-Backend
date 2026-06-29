@@ -4,24 +4,56 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
+use App\Models\Assignment;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 class CheckWarrantyExpiryController extends Controller
 {
-    public function checkExpiry($expiry){
-    $currentDate=now()->toDateString();
-    $asset=Asset::where('status','!=','retired')->get();
+    public function checkExpiry()
+    {
+        try {
+            $retiredAssets = [];
 
-    $expiryasset=$asset->filter(function($asset){
-        $expiryDate=Carbon::parse($asset->purchased_date)->addMonths($asset->warrenty_period);
+            $expiredAssets = Asset::where('status', '!=', 'retired')
+                ->whereNotNull('purchased_date')
+                ->whereNotNull('warranty_period')
+                ->get()
+                ->filter(function ($asset) {
+                    return Carbon::parse($asset->purchased_date)
+                        ->addMonths($asset->warranty_period)
+                        ->startOfDay()
+                        ->lte(now()->startOfDay());
+                });
 
-        $expiryDate->isPast();
-    });
-    return response()->json([
-        'success'=>true,
-        'data'=>$expiryasset,
-        'message'=>'Expiry Asset retrieved successfully'
-    ]);
+            DB::transaction(function () use ($expiredAssets, &$retiredAssets) {
+                foreach ($expiredAssets as $asset) {
+                    Assignment::where('assets_id', $asset->id)
+                        ->where('status', '!=', 'returned')
+                        ->update([
+                            'status' => 'returned',
+                            'returned_date' => now(),
+                        ]);
+
+                    $asset->update(['status' => 'retired']);
+
+                    $retiredAssets[] = $asset->fresh();
+                }
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $retiredAssets,
+                'message' => count($retiredAssets) > 0
+                    ? 'Expired assets retired and assignments returned successfully'
+                    : 'No expired assets found',
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

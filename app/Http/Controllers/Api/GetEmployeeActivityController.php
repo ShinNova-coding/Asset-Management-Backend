@@ -20,20 +20,7 @@ class GetEmployeeActivityController extends Controller
 
             $maintenance = Maintenance::with(['asset.category', 'asset.media'])
                 ->where('users_id', $id)
-                ->whereHas('asset', function ($query) {
-                    $query->where('status', 'maintenance');
-                })
-                ->get()
-                ->pluck('asset')
-                ->map(function ($asset) {
-                    if ($asset) {
-                        $asset->image_url = $asset->getFirstMediaUrl('images') ?: null;
-
-                        unset($asset->media);
-                    }
-                    return $asset;
-                })
-                ->filter();
+                ->get();
             if ($maintenance->isEmpty()) {
                 return response()->json([
                     'success' => false,

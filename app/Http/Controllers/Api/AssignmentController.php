@@ -11,10 +11,7 @@ use App\Models\User;
 use App\Services\FirebaseNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\FirebaseService;
-
 use Exception;
-use Kreait\Firebase\Messaging\CloudMessage;
 
 class AssignmentController extends Controller
 {
@@ -50,12 +47,14 @@ class AssignmentController extends Controller
                 'note' => 'nullable|string',
             ]);
 
-            $asset = Asset::where('name', $request->assets_name)->first();
+            $asset = Asset::where('name', $request->assets_name)
+                ->where('status', 'available')->first();
             if ($asset->status !== 'available') {
                 return response()->json(['success' => false, 'message' => 'Asset not available'], 400);
             }
             $asset_id = $asset->id;
-            $users_id = User::where('name', $request->users_name)->first()->id;
+            $user = User::where('name', $request->users_name)->first();
+            $users_id = $user->id;
 
             $assignment = DB::transaction(function () use ($request, $asset_id, $users_id) {
                 $assignment = Assignment::create([
@@ -76,22 +75,19 @@ class AssignmentController extends Controller
             });
 
             $asset->update(['status' => 'assigned']);
-            try {
-                $user = User::where('id', $assignment->users_id)->first();
-                if ($user && $user->fcm_token) {
 
+            if ($user && $user->fcm_token) {
+                try {
                     $firebaseService->send(
                         $user->fcm_token,
                         'Asset Assigned',
                         'You have been assigned: ' . $asset->name
                     );
+                } catch (Exception $e) {
+                    if (str_contains($e->getMessage(), 'registration token is not a valid')) {
+                        $user->update(['fcm_token' => null]);
+                    }
                 }
-
-            } catch (Exception $e) {
-                if (str_contains($e->getMessage(), 'registration token is not a valid')) {
-                    $user->update(['fcm_token' => null]);
-                }
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
 
             return response()->json(['success' => true, 'data' => $assignment], 201);

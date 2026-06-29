@@ -89,7 +89,7 @@ class MaintenanceRequestController extends Controller
                             'message' => 'No active maintenance request found'
                             ], 404);
                     }
-                    $user=User::find($maintenance->user_id);
+                    $user=User::find($maintenance->users_id);
                 if ($user && $user->fcm_token) {
                 $firebaseService->send(
                     $user->fcm_token,

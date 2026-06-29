@@ -79,12 +79,12 @@ class ExpenseRequestController extends Controller
                     'approved_by'=>$request->user()->id
                 ]);
 
-                $user=User::find('id',$expense->users_id);
+                $user=User::find($expense->users_id);
                 if ($user && $user->fcm_token) {
                 $firebaseService->send(
                     $user->fcm_token,
                     'Expense approved',
-                    'Expense has been approved' . ' ' . $expense->asset->name
+                    'Expense has been approved' 
                 );
 
             }
@@ -112,12 +112,12 @@ class ExpenseRequestController extends Controller
                     'status'=>'canceled',
                 ]);
 
-                 $user=User::find('id',$expense->users_id);
+                 $user=User::find($expense->users_id);
                 if ($user && $user->fcm_token) {
                 $firebaseService->send(
                     $user->fcm_token,
                     'Expense canceled',
-                    'Expense has been canceled' . ' ' . $expense->asset->name
+                    'Expense has been canceled' 
                 );
 
             }
