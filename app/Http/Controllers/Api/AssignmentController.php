@@ -83,6 +83,7 @@ class AssignmentController extends Controller
                         'Asset Assigned',
                         'You have been assigned: ' . $asset->name
                     );
+                    
                 } catch (Exception $e) {
                     if (str_contains($e->getMessage(), 'registration token is not a valid')) {
                         $user->update(['fcm_token' => null]);

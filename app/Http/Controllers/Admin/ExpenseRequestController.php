@@ -84,7 +84,7 @@ class ExpenseRequestController extends Controller
                 $firebaseService->send(
                     $user->fcm_token,
                     'Expense approved',
-                    'Expense has been approved' 
+                    'Expense has been approved for '.$expense->title
                 );
 
             }
@@ -117,7 +117,7 @@ class ExpenseRequestController extends Controller
                 $firebaseService->send(
                     $user->fcm_token,
                     'Expense canceled',
-                    'Expense has been canceled' 
+                    'Expense has been canceled for '.$expense->title 
                 );
 
             }

@@ -77,7 +77,7 @@ class ExpenseController extends Controller
 
             $asset->image_url = $image_url;
             $asset->preview_url = $preview_url;
-            }
+            
             $expense = Expense::create([
                 'users_id' => $request->users_id,
                 'maintenances_id' => $request->maintenances_id,
@@ -89,7 +89,20 @@ class ExpenseController extends Controller
                 'status' => $request->status,
                 'description' => $request->description
             ]);
-
+            }
+            else{
+                $expense = Expense::create([
+                'users_id' => $request->users_id,
+                'maintenances_id' => $request->maintenances_id,
+                'assets_id' => $request->assets_id,
+                'cost' => $request->cost,
+                'expense_date' => $request->expense_date,
+                'title' => $request->title,
+                'expense_type' => $request->expense_type,
+                'status' => $request->status,
+                'description' => $request->description
+            ]);
+            }
             if ($request->has('voucher') && $request->filled('voucher')) {
                 $expense->addMediaFromBase64($request->voucher)
                     ->toMediaCollection('vouchers');
@@ -103,7 +116,7 @@ class ExpenseController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => [$expense,$asset],
+                'data' => $expense,
                 'message' => 'expense created successfully and asset created successfully'
             ], 200);
         } catch (Exception $e) {
