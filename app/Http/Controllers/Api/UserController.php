@@ -149,6 +149,12 @@ class UserController extends Controller
         try {
             $id = $request->input('id');
             $user = User::find($id);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found',
+            ], 404);
+        }
             $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => [
@@ -161,7 +167,7 @@ class UserController extends Controller
                 'phone_number' => 'nullable|string|max:20',
                 'role' => 'required',
                 'status' => 'required|in:active,inactive,suspended,resigned',
-                'image' => 'required|string'
+                'image' => 'string'
             ]);
 
             if($request->status ==='suspended'){
@@ -178,7 +184,8 @@ class UserController extends Controller
                 $data['password'] = Hash::make($request->password);
             }
 
-            if ($request->has('image') && $request->filled('image')) {
+            if ($request->filled('image')) {
+                // Replace existing image only when a new image is provided
                 $user->clearMediaCollection('images');
                 $user->addMediaFromBase64($request->image)
                     ->toMediaCollection('images');
@@ -190,6 +197,9 @@ class UserController extends Controller
             }
 
             $user->load('roles');
+            // Attach image URLs (unchanged if no new image provided)
+            $user->image_url = $user->getFirstMediaUrl('images') ?: null;
+            $user->preview_url = $user->getFirstMediaUrl('images', 'preview') ?: null;
             return response()->json([
                 'success' => true,
                 'data' => $user->refresh(),
